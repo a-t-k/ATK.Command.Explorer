@@ -1,0 +1,77 @@
+# ---------------------------------------------------------------------------
+# .NET / MSBuild
+# ---------------------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+artifacts/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+project.lock.json
+project.fragment.lock.json
+*.nuget.g.props
+*.nuget.g.targets
+*.nuget.dgspec.json
+*.nuget.props
+*.nuget.targets
+*.FileListAbsolute.txt
+*.AssemblyInfo.cs
+*.csproj.nuget.*
+TestResults/
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+# ---------------------------------------------------------------------------
+# Visual Studio / VS Code
+# ---------------------------------------------------------------------------
+.vs/
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/settings.json
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.dtbcache.v2
+*.vsidx
+
+# ---------------------------------------------------------------------------
+# Node (nur falls die UI mitgebaut wird)
+# ---------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+.angular/
+out-tsc/
+*.tsbuildinfo
+
+# ---------------------------------------------------------------------------
+# Betriebssystem / Editor
+# ---------------------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
