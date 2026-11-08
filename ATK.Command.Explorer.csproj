@@ -11,17 +11,28 @@
     <PropertyGroup>
         <PackageId>ATK.Command.Explorer</PackageId>
         <Version>0.1.0</Version>
-        <Authors>ATK</Authors>
+        <Authors>Alexander Tkacuk</Authors>
+        <Company>ATK</Company>
         <Description>
             Stellt die Metadaten aller Commands einer WebApi als HTTP-Endpunkt bereit.
             Das Swashbuckle-Pendant für command-basierte APIs: liefert Beschreibung,
             Properties, Autorisierung und JSON-Schema pro Command.
         </Description>
-        <PackageTags>commands;explorer;swashbuckle;api;metadata</PackageTags>
+        <PackageTags>commands;explorer;swashbuckle;api;metadata;json-schema;documentation</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/a-t-k/ATK.Command.Explorer.git</RepositoryUrl>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <IsPackable>true</IsPackable>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+        <None Include="LICENSE" Pack="true" PackagePath="\" />
+    </ItemGroup>
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
