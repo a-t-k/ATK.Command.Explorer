@@ -1,0 +1,113 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);1591</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageId>ATK.Command.Explorer</PackageId>
+        <Version>0.1.0</Version>
+        <Authors>ATK</Authors>
+        <Description>
+            Stellt die Metadaten aller Commands einer WebApi als HTTP-Endpunkt bereit.
+            Das Swashbuckle-Pendant für command-basierte APIs: liefert Beschreibung,
+            Properties, Autorisierung und JSON-Schema pro Command.
+        </Description>
+        <PackageTags>commands;explorer;swashbuckle;api;metadata</PackageTags>
+        <IsPackable>true</IsPackable>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <!--
+        Vorlagen für den Framework-Export. Sie liegen als eingebettete Ressource im Paket,
+        damit der Explorer sie ohne Dateisystemzugriff ausliefern kann.
+
+        Der LogicalName trennt Name und Endung mit `__`, weil Dateinamen selbst Punkte
+        enthalten dürfen (`base.http.ts`) – sonst wäre die Endung nicht eindeutig.
+    -->
+    <ItemGroup>
+        <EmbeddedResource Include="Framework\Templates\**\*.*">
+            <LogicalName>ATK.Command.Explorer.Framework.Templates.%(RecursiveDir)%(Filename)__%(Extension)</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ATK.Command.AspNet.ModelBinder" Version="0.0.5" />
+        <PackageReference Include="ATK.Command.CsToTsGenerator" Version="1.1.9" />
+        <PackageReference Include="Cortex.Mediator" Version="3.1.2" />
+        <PackageReference Include="PDFsharp" Version="6.2.4" />
+        <!--
+            PDFsharp 6.2.4 ist die letzte MIT-lizenzierte Version. Ab 6.5.0 steht das Paket
+            unter AGPL-3.0-only und verlangt zusätzlich einen Lizenzschlüssel zur Laufzeit
+            (PdfSharpLicenseException) – beides ist für ein weitergegebenes NuGet-Paket
+            nicht tragbar.
+        -->
+        <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+    </ItemGroup>
+
+    <!--
+        Die Explorer-UI wird als eingebettete Ressource mitgeliefert.
+
+        Standard: Beim Packen wird die UI automatisch neu gebaut.
+        Optional: Auch beim normalen Build bauen, mit
+                      dotnet build -p:BuildExplorerUiOnBuild=true
+        Abschalten:   dotnet pack -p:SkipExplorerUiBuild=true
+
+        Voraussetzung ist ein vorhandenes node_modules in src/ATK.Command.Ui.
+        Fehlt es, wird ohne UI gepackt und eine Warnung ausgegeben.
+    -->
+    <PropertyGroup>
+        <ExplorerUiProjectDir>$(MSBuildThisFileDirectory)..\ATK.Command.Ui\</ExplorerUiProjectDir>
+        <ExplorerUiSource>$(ExplorerUiProjectDir)dist\</ExplorerUiSource>
+        <BuildExplorerUiOnBuild Condition="'$(BuildExplorerUiOnBuild)' == ''">false</BuildExplorerUiOnBuild>
+        <SkipExplorerUiBuild Condition="'$(SkipExplorerUiBuild)' == ''">false</SkipExplorerUiBuild>
+    </PropertyGroup>
+
+    <!--
+        Die UI muss VOR dem Einsammeln der Ressourcen gebaut werden. Deshalb hängt der
+        Build an PrepareForBuild und die EmbeddedResource-Einträge entstehen in einem
+        Target – eine statische ItemGroup würde beim Laden des Projekts ausgewertet und
+        einen noch nicht existierenden dist-Ordner nie sehen.
+
+        PrepareForBuild läuft beim Packen mehrfach. Das Flag verhindert, dass die
+        Ressourcen doppelt eingetragen werden (sonst CS1508).
+    -->
+    <Target Name="BuildExplorerUi" BeforeTargets="PrepareForBuild" Condition="'$(SkipExplorerUiBuild)' != 'true'&#xD;&#xA;                       AND ('$(BuildExplorerUiOnBuild)' == 'true' OR '$(_IsPacking)' == 'true')">
+        <Warning Condition="!Exists('$(ExplorerUiProjectDir)node_modules')" Text="Explorer-UI wird nicht gebaut: '$(ExplorerUiProjectDir)node_modules' fehlt. Führe 'npm install' in src/ATK.Command.Ui aus." />
+        <Exec Condition="Exists('$(ExplorerUiProjectDir)node_modules')" Command="npm run build:embedded" WorkingDirectory="$(ExplorerUiProjectDir)" />
+    </Target>
+
+    <Target Name="EmbedExplorerUi" BeforeTargets="PrepareForBuild">
+        <!--
+            Erst sammeln, dann umbenennen. In einer ItemGroup innerhalb eines Targets wird
+            %(RecursiveDir) NICHT pro Element ausgewertet – alle Dateien bekämen denselben
+            LogicalName und der Compiler meldet CS1508. Die zweite ItemGroup mit explizitem
+            Batching (%(_ExplorerUiFile.*)) löst das.
+        -->
+        <ItemGroup Condition="'$(ExplorerUiEmbedded)' != 'true' AND Exists('$(ExplorerUiSource)index.html')">
+            <_ExplorerUiFile Include="$(ExplorerUiSource)**\*.*" />
+        </ItemGroup>
+
+        <ItemGroup Condition="'$(ExplorerUiEmbedded)' != 'true' AND Exists('$(ExplorerUiSource)index.html')">
+            <EmbeddedResource Include="@(_ExplorerUiFile)">
+                <LogicalName>ATK.Command.Explorer.Ui.wwwroot.%(_ExplorerUiFile.RecursiveDir)%(_ExplorerUiFile.Filename)%(_ExplorerUiFile.Extension)</LogicalName>
+            </EmbeddedResource>
+        </ItemGroup>
+
+        <PropertyGroup>
+            <ExplorerUiEmbedded>true</ExplorerUiEmbedded>
+        </PropertyGroup>
+
+        <Warning Condition="!Exists('$(ExplorerUiSource)index.html')" Text="ATK.Command.Explorer wird ohne UI gepackt: '$(ExplorerUiSource)index.html' fehlt." />
+    </Target>
+
+</Project>
