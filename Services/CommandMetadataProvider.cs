@@ -433,8 +433,11 @@ public sealed class CommandMetadataProvider
         string[] roles = SplitValues(authorize?.Roles);
         string[] policies = SplitValues(authorize?.Policy);
 
-        bool requiresAuthentication = !allowAnonymous
-                                      && (authorize is not null || claims.Length > 0);
+        // Commands sind per Default gesperrt. Nur [AllowAnonymous] hebt das auf.
+        // Der ModelBinder (DefaultCommandAuthentication) verlangt sonst einen angemeldeten
+        // Benutzer – auch ohne [Authorize]. Die Metadaten müssen das genauso abbilden,
+        // sonst zeigt der Explorer ein Command als offen an, das in Wahrheit 401 liefert.
+        bool requiresAuthentication = !allowAnonymous;
 
         return new CommandAuthorizationInfo
         {
@@ -508,7 +511,7 @@ public sealed class CommandMetadataProvider
         }
 
         return parts.Count == 0
-            ? "Keine Autorisierung definiert."
+            ? "Anmeldung erforderlich – keine Rollen, Policies oder Claims eingeschränkt."
             : string.Join(" | ", parts);
     }
 

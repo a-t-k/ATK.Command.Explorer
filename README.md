@@ -57,6 +57,36 @@ builder.Services.Configure<ApiBehaviorOptions>(
     o => o.SuppressModelStateInvalidFilter = true);
 ```
 
+## Autorisierung: Commands sind per Default gesperrt
+
+**Jedes Command ist ohne weiteres Zutun geschützt.** Der ModelBinder
+(`DefaultCommandAuthentication`) verlangt einen angemeldeten Benutzer, solange kein
+`[AllowAnonymous]` gesetzt ist – auch dann, wenn gar kein `[Authorize]` am Command steht.
+
+```csharp
+// geschützt: Anmeldung erforderlich, keine Rollen-/Claim-Prüfung
+public class CreateOrderCommand : ICommand<CreateOrderResult>, IRequestCommand { }
+
+// geschützt: Anmeldung + Rolle + Claim
+[Authorize(Roles = "Admin,Manager")]
+[ClaimRequirement("tenant", "acme")]
+public class PurgeCacheCommand : ICommand<PurgeCacheResult>, IRequestCommand { }
+
+// offen: ohne Anmeldung ausführbar
+[AllowAnonymous]
+public class SayHelloCommand : ICommand<string>, IRequestCommand { }
+```
+
+| Attribute am Command | Ergebnis ohne Token | Ergebnis mit gültigem Token |
+| --- | --- | --- |
+| keine | `401` | `200` |
+| `[Authorize(Roles = "Admin")]` | `401` | `200` mit Rolle, sonst `403` |
+| `[ClaimRequirement("k", "v")]` | `401` | `200` mit Claim, sonst `401` |
+| `[AllowAnonymous]` | `200` | `200` |
+
+> Der Explorer zeigt dieselbe Einstufung in `CommandAuthorizationInfo`:
+> `AllowAnonymous`, `RequiresAuthentication`, `Roles`, `Policies`, `Claims`.
+
 ## Optionen
 
 Abschnitt `CommandExplorer` in `appsettings.json`:
