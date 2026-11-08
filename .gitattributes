@@ -1,0 +1,49 @@
+# Standard: Textdateien normalisieren, im Repo immer LF
+* text=auto eol=lf
+
+# Explizit als Text behandeln
+*.cs        text diff=csharp
+*.csproj    text
+*.slnx      text
+*.props     text
+*.targets   text
+*.json      text
+*.md        text
+*.ts        text
+*.html      text
+*.css       text
+*.scss      text
+*.js        text
+*.mjs       text
+*.cjs       text
+*.yml       text
+*.yaml      text
+*.xml       text
+*.http      text
+*.editorconfig text
+*.gitignore text
+*.gitattributes text
+
+# Windows-Skripte brauchen CRLF
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# Binärdateien – keine Konvertierung, kein Diff
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.webp      binary
+*.svg       text
+*.pdf       binary
+*.zip       binary
+*.nupkg     binary
+*.snupkg    binary
+*.dll       binary
+*.exe       binary
+*.pdb       binary
+*.ttf       binary
+*.woff      binary
+*.woff2     binary

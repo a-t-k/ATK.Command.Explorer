@@ -66,10 +66,22 @@
         Fehlt es, wird ohne UI gepackt und eine Warnung ausgegeben.
     -->
     <PropertyGroup>
-        <ExplorerUiProjectDir>$(MSBuildThisFileDirectory)..\ATK.Command.Ui\</ExplorerUiProjectDir>
-        <ExplorerUiSource>$(ExplorerUiProjectDir)dist\</ExplorerUiSource>
+        <!--
+            Pfad zum Angular-Projekt, dessen Build eingebettet wird.
+
+            Standard ist die Monorepo-Lage (../ATK.Command.Ui/). In einem eigenständigen
+            Checkout existiert der Ordner nicht – dann wird ohne UI gepackt, ohne Warnung.
+            Ein abweichender Pfad lässt sich übergeben:
+                dotnet pack -p:ExplorerUiProjectDir=C:\pfad\zu\ATK.Command.Ui\
+        -->
+        <ExplorerUiProjectDir Condition="'$(ExplorerUiProjectDir)' == ''">$(MSBuildThisFileDirectory)..\ATK.Command.Ui\</ExplorerUiProjectDir>
+        <ExplorerUiSource Condition="'$(ExplorerUiSource)' == ''">$(ExplorerUiProjectDir)dist\</ExplorerUiSource>
         <BuildExplorerUiOnBuild Condition="'$(BuildExplorerUiOnBuild)' == ''">false</BuildExplorerUiOnBuild>
         <SkipExplorerUiBuild Condition="'$(SkipExplorerUiBuild)' == ''">false</SkipExplorerUiBuild>
+
+        <!-- Liegt ein Angular-Build vor, wird er eingebettet. Sonst bleibt das Paket schlank. -->
+        <ExplorerUiAvailable Condition="Exists('$(ExplorerUiSource)index.html')">true</ExplorerUiAvailable>
+        <ExplorerUiAvailable Condition="'$(ExplorerUiAvailable)' == ''">false</ExplorerUiAvailable>
     </PropertyGroup>
 
     <!--
@@ -82,7 +94,12 @@
         Ressourcen doppelt eingetragen werden (sonst CS1508).
     -->
     <Target Name="BuildExplorerUi" BeforeTargets="PrepareForBuild" Condition="'$(SkipExplorerUiBuild)' != 'true'&#xD;&#xA;                       AND ('$(BuildExplorerUiOnBuild)' == 'true' OR '$(_IsPacking)' == 'true')">
-        <Warning Condition="!Exists('$(ExplorerUiProjectDir)node_modules')" Text="Explorer-UI wird nicht gebaut: '$(ExplorerUiProjectDir)node_modules' fehlt. Führe 'npm install' in src/ATK.Command.Ui aus." />
+        <!--
+            Nur warnen, wenn das Angular-Projekt vorhanden ist, aber node_modules fehlt.
+            In einem eigenständigen Checkout gibt es kein Angular-Projekt – dann bleibt
+            das Paket ohne UI und der Build läuft still durch.
+        -->
+        <Warning Condition="Exists('$(ExplorerUiProjectDir)') AND !Exists('$(ExplorerUiProjectDir)node_modules')" Text="Explorer-UI wird nicht gebaut: '$(ExplorerUiProjectDir)node_modules' fehlt. Führe 'npm install' in $(ExplorerUiProjectDir) aus." />
         <Exec Condition="Exists('$(ExplorerUiProjectDir)node_modules')" Command="npm run build:embedded" WorkingDirectory="$(ExplorerUiProjectDir)" />
     </Target>
 
@@ -107,7 +124,7 @@
             <ExplorerUiEmbedded>true</ExplorerUiEmbedded>
         </PropertyGroup>
 
-        <Warning Condition="!Exists('$(ExplorerUiSource)index.html')" Text="ATK.Command.Explorer wird ohne UI gepackt: '$(ExplorerUiSource)index.html' fehlt." />
+        <Warning Condition="Exists('$(ExplorerUiProjectDir)') AND !Exists('$(ExplorerUiSource)index.html')" Text="ATK.Command.Explorer wird ohne UI gepackt: '$(ExplorerUiSource)index.html' fehlt." />
     </Target>
 
 </Project>
