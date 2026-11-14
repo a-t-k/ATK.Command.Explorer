@@ -54,9 +54,9 @@ public sealed class FrameworkTemplateProvider
 
         Dictionary<string, string> files = new(StringComparer.Ordinal);
 
-        foreach (string resource in this.GetResourceNames())
+        foreach (var resource in this.GetResourceNames())
         {
-            string? path = ToPath(resource, framework);
+            var path = ToPath(resource, framework);
 
             if (path is null)
             {
@@ -83,9 +83,9 @@ public sealed class FrameworkTemplateProvider
     /// </remarks>
     private static string? ToPath(string resource, string framework)
     {
-        string relative = resource[ResourcePrefix.Length..];
+        var relative = resource[ResourcePrefix.Length..];
 
-        int separator = relative.IndexOfAny(['\\', '/', '.']);
+        var separator = relative.IndexOfAny(['\\', '/', '.']);
         if (separator < 0)
         {
             return null;
@@ -96,18 +96,18 @@ public sealed class FrameworkTemplateProvider
             return null;
         }
 
-        string rest = relative[(separator + 1)..];
+        var rest = relative[(separator + 1)..];
 
-        int extensionSeparator = rest.LastIndexOf(ExtensionSeparator, StringComparison.Ordinal);
+        var extensionSeparator = rest.LastIndexOf(ExtensionSeparator, StringComparison.Ordinal);
         if (extensionSeparator < 0)
         {
             return rest.Replace('\\', '/');
         }
 
-        string name = rest[..extensionSeparator];
+        var name = rest[..extensionSeparator];
 
         // `%(Extension)` enthält den führenden Punkt – der Trenner steht davor.
-        string extension = rest[(extensionSeparator + ExtensionSeparator.Length)..].TrimStart('.');
+        var extension = rest[(extensionSeparator + ExtensionSeparator.Length)..].TrimStart('.');
 
         return $"{name.Replace('\\', '/')}.{extension}";
     }
@@ -120,7 +120,7 @@ public sealed class FrameworkTemplateProvider
 
     private string Read(string resource)
     {
-        using Stream stream = this.assembly.GetManifestResourceStream(resource)
+        using var stream = this.assembly.GetManifestResourceStream(resource)
             ?? throw new InvalidOperationException($"Ressource '{resource}' fehlt.");
 
         using StreamReader reader = new(stream, Encoding.UTF8);

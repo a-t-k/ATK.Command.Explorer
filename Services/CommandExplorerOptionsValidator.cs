@@ -26,7 +26,7 @@ public sealed class CommandExplorerOptionsValidator : IValidateOptions<CommandEx
 
         HashSet<string> seen = new(StringComparer.Ordinal);
 
-        foreach (CommandExplorerAuthentication authentication in options.Authentications)
+        foreach (var authentication in options.Authentications)
         {
             if (string.IsNullOrWhiteSpace(authentication.Id))
             {
@@ -43,10 +43,10 @@ public sealed class CommandExplorerOptionsValidator : IValidateOptions<CommandEx
                     + "Jede Id muss eindeutig sein.");
             }
 
-            bool hasToken = !string.IsNullOrWhiteSpace(authentication.Token)
+            var hasToken = !string.IsNullOrWhiteSpace(authentication.Token)
                             || authentication.TokenFactory is not null;
 
-            bool hasBasicCredentials = authentication.Type == CommandExplorerAuthenticationType.Basic
+            var hasBasicCredentials = authentication.Type == CommandExplorerAuthenticationType.Basic
                                        && !string.IsNullOrWhiteSpace(authentication.UserName);
 
             if (authentication.Type != CommandExplorerAuthenticationType.None

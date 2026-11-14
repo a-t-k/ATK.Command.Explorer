@@ -25,16 +25,16 @@ internal static class ScopeResolver
         Services.CommandMetadataProvider provider,
         string? scope)
     {
-        IReadOnlyList<CommandDescriptor> all = provider.GetCommands();
+        var all = provider.GetCommands();
 
         if (string.IsNullOrWhiteSpace(scope))
         {
             return all;
         }
 
-        string value = scope.Trim();
+        var value = scope.Trim();
 
-        CommandDescriptor? single = all.FirstOrDefault(
+        var single = all.FirstOrDefault(
             command => string.Equals(command.FullName, value, StringComparison.Ordinal)
                        || string.Equals(command.Name, value, StringComparison.Ordinal));
 
@@ -43,9 +43,9 @@ internal static class ScopeResolver
             return [single];
         }
 
-        string prefix = value + ".";
+        var prefix = value + ".";
 
-        List<CommandDescriptor> matches = all
+        var matches = all
             .Where(command => string.Equals(command.Namespace, value, StringComparison.Ordinal)
                               || command.Namespace.StartsWith(prefix, StringComparison.Ordinal))
             .ToList();
@@ -68,7 +68,7 @@ internal static class ScopeResolver
         Services.CommandMetadataProvider provider,
         string? scope)
     {
-        IReadOnlyList<Type>? types = provider.GetCommandTypes(scope);
+        var types = provider.GetCommandTypes(scope);
 
         return types ?? throw new InvalidOperationException(
             $"Der Bereich '{scope}' enthält keine Commands.");
@@ -97,7 +97,7 @@ internal static class ScopeResolver
             return note;
         }
 
-        int end = note.IndexOf("\n---", 3, StringComparison.Ordinal);
+        var end = note.IndexOf("\n---", 3, StringComparison.Ordinal);
 
         return end < 0
             ? note
@@ -111,7 +111,7 @@ internal static class ScopeResolver
     /// <returns>Der Name ohne Sonderzeichen.</returns>
     public static string Slug(string title)
     {
-        char[] invalid = Path.GetInvalidFileNameChars();
+        var invalid = Path.GetInvalidFileNameChars();
         string cleaned = new(title.Select(c => invalid.Contains(c) || c == ' ' ? '-' : c).ToArray());
 
         return cleaned.Trim('-');

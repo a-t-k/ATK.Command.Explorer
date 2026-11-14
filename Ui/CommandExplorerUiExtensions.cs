@@ -51,7 +51,7 @@ public static class CommandExplorerUiExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        CommandExplorerOptions explorer = app.ApplicationServices
+        var explorer = app.ApplicationServices
             .GetRequiredService<IOptions<CommandExplorerOptions>>()
             .Value;
 
@@ -64,7 +64,7 @@ public static class CommandExplorerUiExtensions
             typeof(CommandExplorerUiExtensions).Assembly,
             ResourcePrefix);
 
-        string basePath = "/" + explorer.UiPath.Trim('/');
+        var basePath = "/" + explorer.UiPath.Trim('/');
 
         // index.html wird selbst ausgeliefert, weil das <base href> auf den konfigurierten
         // Pfad umgeschrieben werden muss. Angular baut die Datei mit href="/", was bei
@@ -87,11 +87,11 @@ public static class CommandExplorerUiExtensions
                 return;
             }
 
-            string remaining = context.Request.Path.Value![basePath.Length..].Trim('/');
+            var remaining = context.Request.Path.Value![basePath.Length..].Trim('/');
 
             // Nur der Einstieg und Client-Routen ohne Dateiendung liefern index.html.
             // Eine fehlende .js-Datei soll weiterhin 404 ergeben und nicht als HTML gelten.
-            bool isEntryPoint = remaining.Length == 0
+            var isEntryPoint = remaining.Length == 0
                 || string.Equals(remaining, "index.html", StringComparison.OrdinalIgnoreCase);
 
             if (!isEntryPoint && Path.HasExtension(remaining))
@@ -100,7 +100,7 @@ public static class CommandExplorerUiExtensions
                 return;
             }
 
-            IFileInfo file = provider.GetFileInfo("index.html");
+            var file = provider.GetFileInfo("index.html");
 
             if (!file.Exists)
             {
@@ -110,7 +110,7 @@ public static class CommandExplorerUiExtensions
 
             string html;
 
-            await using (Stream read = file.CreateReadStream())
+            await using (var read = file.CreateReadStream())
             using (StreamReader reader = new(read))
             {
                 html = await reader.ReadToEndAsync(context.RequestAborted);

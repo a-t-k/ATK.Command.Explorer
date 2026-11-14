@@ -27,7 +27,7 @@ public static class VaultArchiveBuilder
 
         using (ZipArchive archive = new(stream, ZipArchiveMode.Create, leaveOpen: true))
         {
-            foreach ((string name, string content) in files)
+            foreach ((var name, var content) in files)
             {
                 WriteEntry(archive, $"{rootFolder}/{name}", content);
             }
@@ -41,9 +41,9 @@ public static class VaultArchiveBuilder
 
     private static void WriteEntry(ZipArchive archive, string path, string content)
     {
-        ZipArchiveEntry entry = archive.CreateEntry(path, CompressionLevel.Optimal);
+        var entry = archive.CreateEntry(path, CompressionLevel.Optimal);
 
-        using Stream entryStream = entry.Open();
+        using var entryStream = entry.Open();
         using StreamWriter writer = new(entryStream, new UTF8Encoding(false));
         writer.Write(content);
     }

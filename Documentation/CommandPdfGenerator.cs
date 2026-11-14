@@ -94,7 +94,7 @@ public sealed class CommandPdfGenerator
 
         writer.Heading("Aufbau", 13);
 
-        foreach (string line in new[]
+        foreach (var line in new[]
                  {
                      "1. Inhaltsverzeichnis als Namespace-Baum",
                      "2. Ein Abschnitt pro Command mit Basisinformationen",
@@ -123,9 +123,9 @@ public sealed class CommandPdfGenerator
         writer.Heading("Inhalt", 18);
         writer.Gap(8);
 
-        IReadOnlyList<DocNode> tree = MarkdownVaultGenerator.BuildTree(commands);
+        var tree = MarkdownVaultGenerator.BuildTree(commands);
 
-        foreach (DocNode node in tree)
+        foreach (var node in tree)
         {
             this.WriteTocNode(writer, node, depth: 0);
         }
@@ -141,7 +141,7 @@ public sealed class CommandPdfGenerator
     private void WriteTocNode(PdfWriter writer, DocNode node, int depth)
     {
         string indent = new(' ', depth * 2);
-        DocNode current = node;
+        var current = node;
         StringBuilder name = new(node.Name);
 
         while (current.Commands.Count == 0 && current.Children.Count == 1)
@@ -152,12 +152,12 @@ public sealed class CommandPdfGenerator
 
         writer.Text($"{indent}{name}  ({current.TotalCount})", 10, bold: true);
 
-        foreach (CommandDescriptor command in current.Commands)
+        foreach (var command in current.Commands)
         {
             writer.Text($"{indent}  {command.Name}", 9);
         }
 
-        foreach (DocNode child in current.Children)
+        foreach (var child in current.Children)
         {
             this.WriteTocNode(writer, child, depth + 1);
         }
@@ -165,7 +165,7 @@ public sealed class CommandPdfGenerator
 
     private void WriteCommands(PdfWriter writer, IReadOnlyList<CommandDescriptor> commands)
     {
-        foreach (CommandDescriptor command in commands.OrderBy(c => c.Name, StringComparer.Ordinal))
+        foreach (var command in commands.OrderBy(c => c.Name, StringComparer.Ordinal))
         {
             writer.NewPage();
             writer.Bookmark(command.Name);
@@ -240,17 +240,17 @@ public sealed class CommandPdfGenerator
         int depth,
         List<TableRow> rows)
     {
-        foreach (CommandPropertyDescriptor property in properties)
+        foreach (var property in properties)
         {
-            string indent = depth == 0 ? string.Empty : new string(' ', depth * 3);
-            string marker = depth == 0 ? string.Empty : "- ";
-            string required = property.IsValueType && !property.IsNullable ? "ja" : "nein";
+            var indent = depth == 0 ? string.Empty : new string(' ', depth * 3);
+            var marker = depth == 0 ? string.Empty : "- ";
+            var required = property.IsValueType && !property.IsNullable ? "ja" : "nein";
 
-            string description = property.Summary ?? string.Empty;
+            var description = property.Summary ?? string.Empty;
 
             if (property.EnumValues.Count > 0)
             {
-                string values = string.Join(
+                var values = string.Join(
                     ", ",
                     property.EnumValues.Select(value => $"{value.Name}={value.Value}"));
 
@@ -315,29 +315,29 @@ public sealed class CommandPdfGenerator
 
         public void Heading(string text, double size)
         {
-            XFont font = this.resolver.CreateFont(CommandPdfFontResolver.Bold, size);
+            var font = this.resolver.CreateFont(CommandPdfFontResolver.Bold, size);
             this.Write(text, font, spacingAfter: 4);
         }
 
         public void Text(string text, double size, bool mono = false, bool bold = false)
         {
-            string faceName = mono
+            var faceName = mono
                 ? CommandPdfFontResolver.Mono
                 : bold
                     ? CommandPdfFontResolver.Bold
                     : CommandPdfFontResolver.Regular;
 
-            XFont font = this.resolver.CreateFont(faceName, size);
+            var font = this.resolver.CreateFont(faceName, size);
             this.Write(text, font, spacingAfter: 1);
         }
 
         public void Wrapped(string text, double size, bool italic = false)
         {
-            XFont font = this.resolver.CreateFont(
+            var font = this.resolver.CreateFont(
                 italic ? CommandPdfFontResolver.Italic : CommandPdfFontResolver.Regular,
                 size);
 
-            foreach (string line in Wrap(text, font, this.ContentWidth))
+            foreach (var line in Wrap(text, font, this.ContentWidth))
             {
                 this.Write(line, font, spacingAfter: 0);
             }
@@ -358,10 +358,10 @@ public sealed class CommandPdfGenerator
                 return;
             }
 
-            double lineHeight = runs
+            var lineHeight = runs
                 .Max(run => this.resolver.CreateFont(run.FaceName, run.Size).GetHeight());
 
-            double totalWidth = runs.Sum(run =>
+            var totalWidth = runs.Sum(run =>
                 this.graphics.MeasureString(
                     run.Text,
                     this.resolver.CreateFont(run.FaceName, run.Size)).Width);
@@ -373,11 +373,11 @@ public sealed class CommandPdfGenerator
                     this.NewPage();
                 }
 
-                double cursor = PageMargin;
+                var cursor = PageMargin;
 
-                foreach (TextRun run in runs)
+                foreach (var run in runs)
                 {
-                    XFont font = this.resolver.CreateFont(run.FaceName, run.Size);
+                    var font = this.resolver.CreateFont(run.FaceName, run.Size);
 
                     this.graphics.DrawString(
                         Sanitize(run.Text),
@@ -401,16 +401,16 @@ public sealed class CommandPdfGenerator
         /// </summary>
         private void WriteRunsWrapped(IReadOnlyList<TextRun> runs, double lineHeight)
         {
-            double x = PageMargin;
-            bool lineHasContent = false;
+            var x = PageMargin;
+            var lineHasContent = false;
 
-            foreach (TextRun run in runs)
+            foreach (var run in runs)
             {
-                XFont font = this.resolver.CreateFont(run.FaceName, run.Size);
+                var font = this.resolver.CreateFont(run.FaceName, run.Size);
 
-                foreach (string word in Tokenize(run.Text))
+                foreach (var word in Tokenize(run.Text))
                 {
-                    double width = this.graphics.MeasureString(word, font).Width;
+                    var width = this.graphics.MeasureString(word, font).Width;
 
                     if (lineHasContent && x + width > PageMargin + this.ContentWidth)
                     {
@@ -450,22 +450,22 @@ public sealed class CommandPdfGenerator
         /// </remarks>
         public void CodeBlock(string code)
         {
-            XFont font = this.resolver.CreateFont(CommandPdfFontResolver.Mono, 8.5);
-            double lineHeight = font.GetHeight();
+            var font = this.resolver.CreateFont(CommandPdfFontResolver.Mono, 8.5);
+            var lineHeight = font.GetHeight();
             const double padding = 6;
             const double indent = 4;
 
-            string[] lines = code.Replace("\r\n", "\n").Split('\n');
-            int index = 0;
+            var lines = code.Replace("\r\n", "\n").Split('\n');
+            var index = 0;
 
             while (index < lines.Length)
             {
-                double available = this.page.Height.Point - PageMargin - this.y;
-                int fit = Math.Max(1, (int)((available - (2 * padding)) / lineHeight));
-                int count = Math.Min(fit, lines.Length - index);
+                var available = this.page.Height.Point - PageMargin - this.y;
+                var fit = Math.Max(1, (int)((available - (2 * padding)) / lineHeight));
+                var count = Math.Min(fit, lines.Length - index);
 
-                double boxHeight = (count * lineHeight) + (2 * padding);
-                double boxWidth = this.ContentWidth;
+                var boxHeight = (count * lineHeight) + (2 * padding);
+                var boxWidth = this.ContentWidth;
 
                 XRect box = new(PageMargin, this.y, boxWidth, boxHeight);
 
@@ -476,9 +476,9 @@ public sealed class CommandPdfGenerator
                     new XPen(XColor.FromArgb(200, 200, 200), 0.75),
                     box);
 
-                double textY = this.y + padding;
+                var textY = this.y + padding;
 
-                for (int offset = 0; offset < count; offset++)
+                for (var offset = 0; offset < count; offset++)
                 {
                     this.graphics.DrawString(
                         Sanitize(lines[index + offset].TrimEnd()),
@@ -523,30 +523,30 @@ public sealed class CommandPdfGenerator
             const double cellPadding = 3;
             const double fontSize = 8.5;
 
-            XFont headerFont = this.resolver.CreateFont(CommandPdfFontResolver.Bold, fontSize);
-            XFont bodyFont = this.resolver.CreateFont(CommandPdfFontResolver.Regular, fontSize);
-            XFont boldFont = this.resolver.CreateFont(CommandPdfFontResolver.Bold, fontSize);
+            var headerFont = this.resolver.CreateFont(CommandPdfFontResolver.Bold, fontSize);
+            var bodyFont = this.resolver.CreateFont(CommandPdfFontResolver.Regular, fontSize);
+            var boldFont = this.resolver.CreateFont(CommandPdfFontResolver.Bold, fontSize);
 
-            double[] columns = widths.Select(width => width * this.ContentWidth).ToArray();
-            double lineHeight = bodyFont.GetHeight();
+            var columns = widths.Select(width => width * this.ContentWidth).ToArray();
+            var lineHeight = bodyFont.GetHeight();
 
             this.DrawTableHeader(headers, columns, headerFont, cellPadding, lineHeight);
 
-            foreach (TableRow row in rows)
+            foreach (var row in rows)
             {
                 List<string[]> wrapped = [];
 
-                for (int column = 0; column < columns.Length; column++)
+                for (var column = 0; column < columns.Length; column++)
                 {
-                    string cell = column < row.Cells.Length ? row.Cells[column] : string.Empty;
-                    XFont font = column == 0 && row.Bold ? boldFont : bodyFont;
+                    var cell = column < row.Cells.Length ? row.Cells[column] : string.Empty;
+                    var font = column == 0 && row.Bold ? boldFont : bodyFont;
 
                     wrapped.Add(
                         Wrap(cell, font, columns[column] - (2 * cellPadding)).ToArray());
                 }
 
-                int lines = Math.Max(1, wrapped.Max(cell => cell.Length));
-                double rowHeight = (lines * lineHeight) + (2 * cellPadding);
+                var lines = Math.Max(1, wrapped.Max(cell => cell.Length));
+                var rowHeight = (lines * lineHeight) + (2 * cellPadding);
 
                 if (this.y + rowHeight > this.page.Height.Point - PageMargin)
                 {
@@ -554,14 +554,14 @@ public sealed class CommandPdfGenerator
                     this.DrawTableHeader(headers, columns, headerFont, cellPadding, lineHeight);
                 }
 
-                double x = PageMargin;
+                var x = PageMargin;
 
-                for (int column = 0; column < columns.Length; column++)
+                for (var column = 0; column < columns.Length; column++)
                 {
-                    XFont font = column == 0 && row.Bold ? boldFont : bodyFont;
-                    double textY = this.y + cellPadding;
+                    var font = column == 0 && row.Bold ? boldFont : bodyFont;
+                    var textY = this.y + cellPadding;
 
-                    foreach (string line in wrapped[column])
+                    foreach (var line in wrapped[column])
                     {
                         this.graphics.DrawString(
                             Sanitize(line),
@@ -590,7 +590,7 @@ public sealed class CommandPdfGenerator
             double cellPadding,
             double lineHeight)
         {
-            double height = lineHeight + (2 * cellPadding);
+            var height = lineHeight + (2 * cellPadding);
 
             if (this.y + height > this.page.Height.Point - PageMargin)
             {
@@ -601,9 +601,9 @@ public sealed class CommandPdfGenerator
                 new XSolidBrush(XColor.FromArgb(235, 235, 235)),
                 new XRect(PageMargin, this.y, this.ContentWidth, height));
 
-            double x = PageMargin;
+            var x = PageMargin;
 
-            for (int column = 0; column < columns.Count; column++)
+            for (var column = 0; column < columns.Count; column++)
             {
                 this.graphics.DrawString(
                     Sanitize(headers[column]),
@@ -633,9 +633,9 @@ public sealed class CommandPdfGenerator
                 PageMargin + this.ContentWidth,
                 this.y + height);
 
-            double x = PageMargin;
+            var x = PageMargin;
 
-            foreach (double column in columns)
+            foreach (var column in columns)
             {
                 this.graphics.DrawLine(pen, x, this.y, x, this.y + height);
                 x += column;
@@ -674,16 +674,16 @@ public sealed class CommandPdfGenerator
             this.graphics?.Dispose();
             this.graphics = null!;
 
-            XFont font = this.resolver.CreateFont(CommandPdfFontResolver.Regular, 8);
-            int total = this.document.PageCount;
+            var font = this.resolver.CreateFont(CommandPdfFontResolver.Regular, 8);
+            var total = this.document.PageCount;
 
-            for (int index = 1; index < total; index++)
+            for (var index = 1; index < total; index++)
             {
-                PdfPage current = this.document.Pages[index];
-                double width = current.Width.Point;
-                double height = current.Height.Point;
+                var current = this.document.Pages[index];
+                var width = current.Width.Point;
+                var height = current.Height.Point;
 
-                using XGraphics footer = XGraphics.FromPdfPage(current, XGraphicsPdfPageOptions.Append);
+                using var footer = XGraphics.FromPdfPage(current, XGraphicsPdfPageOptions.Append);
 
                 footer.DrawLine(
                     new XPen(XColor.FromArgb(200, 200, 200), 0.5),
@@ -730,7 +730,7 @@ public sealed class CommandPdfGenerator
 
             StringBuilder builder = new(text.Length);
 
-            foreach (char character in text)
+            foreach (var character in text)
             {
                 builder.Append(character switch
                 {
@@ -756,7 +756,7 @@ public sealed class CommandPdfGenerator
 
         private void Write(string text, XFont font, double spacingAfter)
         {
-            double height = font.GetHeight();
+            var height = font.GetHeight();
 
             if (this.y + height > this.page.Height.Point - PageMargin)
             {
@@ -787,9 +787,9 @@ public sealed class CommandPdfGenerator
                 yield break;
             }
 
-            int start = 0;
+            var start = 0;
 
-            for (int i = 0; i < text.Length; i++)
+            for (var i = 0; i < text.Length; i++)
             {
                 if (text[i] != ' ')
                 {
@@ -808,7 +808,7 @@ public sealed class CommandPdfGenerator
 
         private static IEnumerable<string> Wrap(string text, XFont font, double maxWidth)
         {
-            foreach (string paragraph in text.Split('\n'))
+            foreach (var paragraph in text.Split('\n'))
             {
                 if (string.IsNullOrWhiteSpace(paragraph))
                 {
@@ -818,9 +818,9 @@ public sealed class CommandPdfGenerator
 
                 StringBuilder line = new();
 
-                foreach (string word in paragraph.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                foreach (var word in paragraph.Split(' ', StringSplitOptions.RemoveEmptyEntries))
                 {
-                    string candidate = line.Length == 0 ? word : $"{line} {word}";
+                    var candidate = line.Length == 0 ? word : $"{line} {word}";
 
                     if (line.Length == 0 || EstimateWidth(candidate, font) <= maxWidth)
                     {

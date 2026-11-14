@@ -64,7 +64,7 @@ public sealed class CommandExplorerAuthorizationConvention : IControllerModelCon
             return;
         }
 
-        CommandExplorerOptions explorer = this.options.CurrentValue;
+        var explorer = this.options.CurrentValue;
 
         if (explorer.AllowAnonymous)
         {
@@ -74,7 +74,7 @@ public sealed class CommandExplorerAuthorizationConvention : IControllerModelCon
 
         this.EnsureAuthenticationIsConfigured(explorer);
 
-        AuthorizationPolicy policy = CommandExplorerPolicyBuilder.Build(
+        var policy = CommandExplorerPolicyBuilder.Build(
             explorer,
             this.authorizationOptions.CurrentValue);
 
@@ -92,9 +92,9 @@ public sealed class CommandExplorerAuthorizationConvention : IControllerModelCon
     /// </remarks>
     private void EnsureAuthenticationIsConfigured(CommandExplorerOptions explorer)
     {
-        AuthenticationOptions authentication = this.authenticationOptions.CurrentValue;
+        var authentication = this.authenticationOptions.CurrentValue;
 
-        bool hasScheme = explorer.AuthenticationSchemes.Count > 0
+        var hasScheme = explorer.AuthenticationSchemes.Count > 0
             || !string.IsNullOrEmpty(authentication.DefaultScheme)
             || !string.IsNullOrEmpty(authentication.DefaultChallengeScheme);
 

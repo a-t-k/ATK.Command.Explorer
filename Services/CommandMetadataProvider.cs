@@ -121,7 +121,7 @@ public sealed class CommandMetadataProvider
     /// </remarks>
     public IReadOnlyList<Type>? GetCommandTypes(string? scope)
     {
-        Type[] all = this.assembly
+        var all = this.assembly
             .GetTypes()
             .Where(type => type is { IsClass: true, IsAbstract: false }
                            && this.markerInterface.IsAssignableFrom(type))
@@ -133,9 +133,9 @@ public sealed class CommandMetadataProvider
             return all;
         }
 
-        string value = scope.Trim();
+        var value = scope.Trim();
 
-        Type? single = all.FirstOrDefault(type =>
+        var single = all.FirstOrDefault(type =>
             string.Equals(type.FullName, value, StringComparison.Ordinal)
             || string.Equals(type.Name, value, StringComparison.Ordinal));
 
@@ -144,9 +144,9 @@ public sealed class CommandMetadataProvider
             return [single];
         }
 
-        string prefix = value + ".";
+        var prefix = value + ".";
 
-        Type[] matches = all
+        var matches = all
             .Where(type => string.Equals(type.Namespace, value, StringComparison.Ordinal)
                            || (type.Namespace?.StartsWith(prefix, StringComparison.Ordinal) ?? false))
             .ToArray();
@@ -165,7 +165,7 @@ public sealed class CommandMetadataProvider
     {
         NamespaceNode root = new() { Name = string.Empty, FullName = string.Empty };
 
-        foreach (CommandDescriptor command in this.GetCommands())
+        foreach (var command in this.GetCommands())
         {
             root = Insert(root, command.NamespaceSegments, command);
         }
@@ -182,14 +182,14 @@ public sealed class CommandMetadataProvider
     /// <returns>Der Teilbaum mit gesetztem <see cref="NamespaceNode.Namespace"/>.</returns>
     private NamespaceNode ApplyPrefix(NamespaceNode node)
     {
-        string? prefix = this.ResolveTrimmedPrefix(node);
+        var prefix = this.ResolveTrimmedPrefix(node);
 
         return WithNamespace(node, prefix, isRoot: true);
     }
 
     private static NamespaceNode WithNamespace(NamespaceNode node, string? prefix, bool isRoot)
     {
-        string full = string.IsNullOrEmpty(prefix)
+        var full = string.IsNullOrEmpty(prefix)
             ? node.FullName
             : string.IsNullOrEmpty(node.FullName)
                 ? prefix
@@ -214,13 +214,13 @@ public sealed class CommandMetadataProvider
     /// </remarks>
     private string? ResolveTrimmedPrefix(NamespaceNode node)
     {
-        CommandDescriptor? command = FindFirstCommand(node);
+        var command = FindFirstCommand(node);
         if (command is null || string.IsNullOrWhiteSpace(command.Namespace))
         {
             return null;
         }
 
-        foreach (string prefix in this.namespacePrefixes)
+        foreach (var prefix in this.namespacePrefixes)
         {
             if (string.Equals(command.Namespace, prefix, StringComparison.Ordinal)
                 || command.Namespace.StartsWith(prefix + ".", StringComparison.Ordinal))
@@ -240,9 +240,9 @@ public sealed class CommandMetadataProvider
             return node.Commands[0];
         }
 
-        foreach (NamespaceNode child in node.Children)
+        foreach (var child in node.Children)
         {
-            CommandDescriptor? found = FindFirstCommand(child);
+            var found = FindFirstCommand(child);
             if (found is not null)
             {
                 return found;
@@ -262,15 +262,15 @@ public sealed class CommandMetadataProvider
             return Rebuild(node, node.Commands.Append(command).ToArray(), node.Children);
         }
 
-        string segment = segments[0];
-        string fullName = string.IsNullOrEmpty(node.FullName) ? segment : $"{node.FullName}.{segment}";
+        var segment = segments[0];
+        var fullName = string.IsNullOrEmpty(node.FullName) ? segment : $"{node.FullName}.{segment}";
         IReadOnlyList<string> rest = segments.Skip(1).ToArray();
 
-        NamespaceNode? existing = node.Children.FirstOrDefault(child => child.Name == segment);
-        NamespaceNode child = existing ?? new NamespaceNode { Name = segment, FullName = fullName };
-        NamespaceNode updatedChild = Insert(child, rest, command);
+        var existing = node.Children.FirstOrDefault(child => child.Name == segment);
+        var child = existing ?? new NamespaceNode { Name = segment, FullName = fullName };
+        var updatedChild = Insert(child, rest, command);
 
-        NamespaceNode[] children = node.Children
+        var children = node.Children
             .Where(candidate => candidate.Name != segment)
             .Append(updatedChild)
             .OrderBy(candidate => candidate.Name, StringComparer.Ordinal)
@@ -295,7 +295,7 @@ public sealed class CommandMetadataProvider
 
     private CommandDescriptor Describe(Type commandType)
     {
-        Type resultType = ResolveResultType(commandType);
+        var resultType = ResolveResultType(commandType);
 
         CommandDescriptor descriptor = new()
         {
@@ -328,7 +328,7 @@ public sealed class CommandMetadataProvider
     /// </remarks>
     private string BuildResultSchema(Type resultType)
     {
-        CommandPropertyDescriptor result = this.DescribeProperty(resultType, "result", 0);
+        var result = this.DescribeProperty(resultType, "result", 0);
 
         return this.schemaBuilder
             .BuildResult(result, FormatTypeName(resultType), this.documentation.GetTypeSummary(resultType))
@@ -340,8 +340,8 @@ public sealed class CommandMetadataProvider
     /// </summary>
     private CommandPropertyDescriptor DescribeProperty(Type type, string name, int depth)
     {
-        Type underlyingType = Nullable.GetUnderlyingType(type) ?? type;
-        CommandPropertyKind kind = ClassifyType(underlyingType);
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+        var kind = ClassifyType(underlyingType);
 
         return new CommandPropertyDescriptor
         {
@@ -366,7 +366,7 @@ public sealed class CommandMetadataProvider
 
     private static Type ResolveResultType(Type commandType)
     {
-        Type? commandInterface = commandType
+        var commandInterface = commandType
             .GetInterfaces()
             .FirstOrDefault(type => type.IsGenericType
                                     && type.GetGenericTypeDefinition() == typeof(ICommand<>));
@@ -388,7 +388,7 @@ public sealed class CommandMetadataProvider
             return [];
         }
 
-        string trimmed = this.TrimNamespacePrefix(@namespace);
+        var trimmed = this.TrimNamespacePrefix(@namespace);
         if (string.IsNullOrWhiteSpace(trimmed))
         {
             return [];
@@ -404,7 +404,7 @@ public sealed class CommandMetadataProvider
     /// <returns>Der verbleibende Rest oder eine leere Zeichenkette.</returns>
     private string TrimNamespacePrefix(string @namespace)
     {
-        foreach (string prefix in this.namespacePrefixes)
+        foreach (var prefix in this.namespacePrefixes)
         {
             if (string.Equals(@namespace, prefix, StringComparison.Ordinal))
             {
@@ -422,22 +422,22 @@ public sealed class CommandMetadataProvider
 
     private CommandAuthorizationInfo DescribeAuthorization(Type commandType)
     {
-        bool allowAnonymous = commandType.GetCustomAttribute<AllowAnonymousAttribute>(inherit: true) is not null;
-        AuthorizeAttribute? authorize = commandType.GetCustomAttribute<AuthorizeAttribute>(inherit: true);
+        var allowAnonymous = commandType.GetCustomAttribute<AllowAnonymousAttribute>(inherit: true) is not null;
+        var authorize = commandType.GetCustomAttribute<AuthorizeAttribute>(inherit: true);
 
-        CommandClaimRequirement[] claims = commandType
+        var claims = commandType
             .GetCustomAttributes<ClaimRequirementAttribute>(inherit: true)
             .Select(ParseClaim)
             .ToArray();
 
-        string[] roles = SplitValues(authorize?.Roles);
-        string[] policies = SplitValues(authorize?.Policy);
+        var roles = SplitValues(authorize?.Roles);
+        var policies = SplitValues(authorize?.Policy);
 
         // Commands sind per Default gesperrt. Nur [AllowAnonymous] hebt das auf.
         // Der ModelBinder (DefaultCommandAuthentication) verlangt sonst einen angemeldeten
         // Benutzer – auch ohne [Authorize]. Die Metadaten müssen das genauso abbilden,
         // sonst zeigt der Explorer ein Command als offen an, das in Wahrheit 401 liefert.
-        bool requiresAuthentication = !allowAnonymous;
+        var requiresAuthentication = !allowAnonymous;
 
         return new CommandAuthorizationInfo
         {
@@ -465,12 +465,12 @@ public sealed class CommandMetadataProvider
     /// </remarks>
     private static CommandClaimRequirement ParseClaim(ClaimRequirementAttribute attribute)
     {
-        object[]? arguments = attribute.Arguments;
-        string raw = arguments is { Length: > 0 }
+        var arguments = attribute.Arguments;
+        var raw = arguments is { Length: > 0 }
             ? Convert.ToString(arguments[0], System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty
             : string.Empty;
 
-        int separator = raw.IndexOf(':', StringComparison.Ordinal);
+        var separator = raw.IndexOf(':', StringComparison.Ordinal);
         if (separator < 0)
         {
             return new CommandClaimRequirement { ClaimType = raw.Trim(), ClaimValue = string.Empty };
@@ -524,7 +524,7 @@ public sealed class CommandMetadataProvider
 
         List<CommandPropertyDescriptor> properties = [];
 
-        foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (property.GetIndexParameters().Length > 0)
             {
@@ -539,9 +539,9 @@ public sealed class CommandMetadataProvider
 
     private CommandPropertyDescriptor DescribeProperty(PropertyInfo property, int depth)
     {
-        Type propertyType = property.PropertyType;
-        Type underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
-        CommandPropertyKind kind = ClassifyType(underlyingType);
+        var propertyType = property.PropertyType;
+        var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+        var kind = ClassifyType(underlyingType);
 
         return new CommandPropertyDescriptor
         {
@@ -568,14 +568,14 @@ public sealed class CommandMetadataProvider
 
     private CommandPropertyDescriptor? DescribeElementType(Type collectionType, int depth)
     {
-        Type? elementType = ResolveElementType(collectionType);
+        var elementType = ResolveElementType(collectionType);
         if (elementType is null || depth > MaxDepth)
         {
             return null;
         }
 
-        Type underlying = Nullable.GetUnderlyingType(elementType) ?? elementType;
-        CommandPropertyKind kind = ClassifyType(underlying);
+        var underlying = Nullable.GetUnderlyingType(elementType) ?? elementType;
+        var kind = ClassifyType(underlying);
 
         return new CommandPropertyDescriptor
         {
@@ -598,8 +598,8 @@ public sealed class CommandMetadataProvider
         Enum.GetNames(enumType)
             .Select(name =>
             {
-                FieldInfo field = enumType.GetField(name)!;
-                object? rawValue = field.GetRawConstantValue();
+                var field = enumType.GetField(name)!;
+                var rawValue = field.GetRawConstantValue();
 
                 return new CommandEnumValue
                 {
@@ -696,7 +696,7 @@ public sealed class CommandMetadataProvider
             return collectionType.GetElementType();
         }
 
-        Type? enumerable = collectionType
+        var enumerable = collectionType
             .GetInterfaces()
             .Append(collectionType)
             .FirstOrDefault(type => type.IsGenericType
@@ -707,7 +707,7 @@ public sealed class CommandMetadataProvider
 
     private static string FormatTypeName(Type type)
     {
-        Type underlying = Nullable.GetUnderlyingType(type) ?? type;
+        var underlying = Nullable.GetUnderlyingType(type) ?? type;
 
         if (underlying.IsArray)
         {
@@ -719,14 +719,14 @@ public sealed class CommandMetadataProvider
             return GetAlias(underlying);
         }
 
-        string name = underlying.Name;
-        int tickIndex = name.IndexOf('`', StringComparison.Ordinal);
+        var name = underlying.Name;
+        var tickIndex = name.IndexOf('`', StringComparison.Ordinal);
         if (tickIndex > 0)
         {
             name = name[..tickIndex];
         }
 
-        string arguments = string.Join(", ", underlying.GetGenericArguments().Select(FormatTypeName));
+        var arguments = string.Join(", ", underlying.GetGenericArguments().Select(FormatTypeName));
         return $"{name}<{arguments}>";
     }
 
@@ -759,7 +759,7 @@ public sealed class CommandMetadataProvider
 
     private static string? FormatDefaultValue(PropertyInfo property)
     {
-        DefaultValueAttribute? defaultValue = property.GetCustomAttribute<DefaultValueAttribute>();
+        var defaultValue = property.GetCustomAttribute<DefaultValueAttribute>();
         if (defaultValue?.Value is not null)
         {
             return Convert.ToString(defaultValue.Value, System.Globalization.CultureInfo.InvariantCulture);
@@ -772,8 +772,8 @@ public sealed class CommandMetadataProvider
 
         try
         {
-            object? instance = RuntimeHelpers.GetUninitializedObject(property.DeclaringType!);
-            object? value = property.GetValue(instance);
+            var instance = RuntimeHelpers.GetUninitializedObject(property.DeclaringType!);
+            var value = property.GetValue(instance);
 
             // "Leere" Defaults sind für ein Formular wertlos und würden nur Rauschen erzeugen.
             return value switch
@@ -797,8 +797,8 @@ public sealed class CommandMetadataProvider
     {
         try
         {
-            object instance = RuntimeHelpers.GetUninitializedObject(commandType);
-            JsonNode? node = JsonSerializer.SerializeToNode(instance, commandType, this.jsonOptions);
+            var instance = RuntimeHelpers.GetUninitializedObject(commandType);
+            var node = JsonSerializer.SerializeToNode(instance, commandType, this.jsonOptions);
 
             if (node is JsonObject jsonObject)
             {

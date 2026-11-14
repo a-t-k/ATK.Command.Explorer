@@ -47,7 +47,7 @@ public sealed class ExplorerCommandModelBinder : IModelBinder
 
         // Body ist nicht wiederholbar – einmal lesen und puffern.
         using StreamReader reader = new(bindingContext.HttpContext.Request.Body);
-        string json = await reader.ReadToEndAsync(bindingContext.HttpContext.RequestAborted);
+        var json = await reader.ReadToEndAsync(bindingContext.HttpContext.RequestAborted);
 
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -59,9 +59,9 @@ public sealed class ExplorerCommandModelBinder : IModelBinder
 
         try
         {
-            using JsonDocument document = JsonDocument.Parse(json);
+            using var document = JsonDocument.Parse(json);
 
-            typeName = document.RootElement.TryGetProperty("$type", out JsonElement typeElement)
+            typeName = document.RootElement.TryGetProperty("$type", out var typeElement)
                 ? typeElement.GetString()
                 : null;
         }
@@ -83,7 +83,7 @@ public sealed class ExplorerCommandModelBinder : IModelBinder
             return;
         }
 
-        Type? commandType = this.ResolveType(typeName);
+        var commandType = this.ResolveType(typeName);
 
         if (commandType is null)
         {
@@ -127,10 +127,10 @@ public sealed class ExplorerCommandModelBinder : IModelBinder
     /// </remarks>
     private Type? ResolveType(string typeName)
     {
-        string fullName = typeName;
+        var fullName = typeName;
         string? assemblyName = null;
 
-        int separator = typeName.IndexOf(',', StringComparison.Ordinal);
+        var separator = typeName.IndexOf(',', StringComparison.Ordinal);
 
         if (separator > 0)
         {
@@ -138,14 +138,14 @@ public sealed class ExplorerCommandModelBinder : IModelBinder
             assemblyName = typeName[(separator + 1)..].Trim();
         }
 
-        IEnumerable<Assembly> candidates = assemblyName is null
+        var candidates = assemblyName is null
             ? this.assemblies
             : this.assemblies.Where(assembly =>
                 string.Equals(assembly.GetName().Name, assemblyName, StringComparison.Ordinal));
 
-        foreach (Assembly assembly in candidates)
+        foreach (var assembly in candidates)
         {
-            Type? type = assembly.GetType(fullName, throwOnError: false);
+            var type = assembly.GetType(fullName, throwOnError: false);
 
             if (type is not null && typeof(IExplorerCommand).IsAssignableFrom(type))
             {

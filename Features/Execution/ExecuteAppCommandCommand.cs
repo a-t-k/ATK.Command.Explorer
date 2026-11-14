@@ -96,9 +96,9 @@ public sealed class ExecuteAppCommandCommandHandler
         ExecuteAppCommandCommand command,
         CancellationToken cancellationToken)
     {
-        long started = Environment.TickCount64;
+        var started = Environment.TickCount64;
 
-        IReadOnlyDictionary<string, string> authHeaders =
+        var authHeaders =
             await this.resolver.ResolveHeadersAsync(command.AuthenticationId, cancellationToken);
 
         using HttpRequestMessage request = new(HttpMethod.Post, this.BuildCommandUri());
@@ -108,19 +108,19 @@ public sealed class ExecuteAppCommandCommandHandler
             Encoding.UTF8,
             "application/json");
 
-        foreach (KeyValuePair<string, string> header in authHeaders)
+        foreach (var header in authHeaders)
         {
             request.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
 
-        using HttpClient client = this.httpClientFactory.CreateClient(nameof(ExecuteAppCommandCommandHandler));
+        using var client = this.httpClientFactory.CreateClient(nameof(ExecuteAppCommandCommandHandler));
 
-        using HttpResponseMessage response = await client.SendAsync(
+        using var response = await client.SendAsync(
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
 
-        string body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
         return new AppCommandResult
         {
@@ -143,16 +143,16 @@ public sealed class ExecuteAppCommandCommandHandler
     /// </remarks>
     private Uri BuildCommandUri()
     {
-        string path = "/" + this.options.Value.CommandEndpoint.Trim('/');
+        var path = "/" + this.options.Value.CommandEndpoint.Trim('/');
 
-        string? configured = this.options.Value.CommandBaseUrl;
+        var configured = this.options.Value.CommandBaseUrl;
 
         if (!string.IsNullOrWhiteSpace(configured))
         {
             return new Uri($"{configured.TrimEnd('/')}{path}");
         }
 
-        HttpRequest? current = this.httpContextAccessor.HttpContext?.Request;
+        var current = this.httpContextAccessor.HttpContext?.Request;
 
         if (current is null)
         {

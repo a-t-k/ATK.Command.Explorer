@@ -21,13 +21,13 @@ public sealed class CommandExplorerClaimHandler
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(requirement);
 
-        foreach (CommandExplorerClaim claim in requirement.Claims)
+        foreach (var claim in requirement.Claims)
         {
-            IEnumerable<string> actualValues = context.User
+            var actualValues = context.User
                 .FindAll(claim.Type)
                 .Select(c => c.Value);
 
-            bool satisfied = claim.Values.Count == 0
+            var satisfied = claim.Values.Count == 0
                 ? context.User.HasClaim(c => c.Type == claim.Type)
                 : actualValues.Any(value => claim.Values.Contains(value, StringComparer.Ordinal));
 

@@ -151,9 +151,9 @@ public static class CommandExplorerServiceCollectionExtensions
     /// </remarks>
     private static IServiceCollection AddExplorerCommands(this IServiceCollection services)
     {
-        Assembly assembly = typeof(IExplorerCommand).Assembly;
+        var assembly = typeof(IExplorerCommand).Assembly;
 
-        IEnumerable<Type> handlerTypes = assembly
+        var handlerTypes = assembly
             .GetTypes()
             .Where(type => type is { IsClass: true, IsAbstract: false }
                            && type.GetInterfaces().Any(@interface =>
@@ -161,9 +161,9 @@ public static class CommandExplorerServiceCollectionExtensions
                                && @interface.GetGenericTypeDefinition()
                                == typeof(IExplorerCommandHandler<,>)));
 
-        foreach (Type handlerType in handlerTypes)
+        foreach (var handlerType in handlerTypes)
         {
-            Type serviceType = handlerType.GetInterfaces().First(@interface =>
+            var serviceType = handlerType.GetInterfaces().First(@interface =>
                 @interface.IsGenericType
                 && @interface.GetGenericTypeDefinition() == typeof(IExplorerCommandHandler<,>));
 

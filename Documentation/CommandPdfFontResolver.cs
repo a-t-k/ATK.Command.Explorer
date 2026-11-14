@@ -91,12 +91,12 @@ public sealed class CommandPdfFontResolver : IFontResolver
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(faceName);
 
-        if (this.cache.TryGetValue(faceName, out byte[]? cached))
+        if (this.cache.TryGetValue(faceName, out var cached))
         {
             return cached;
         }
 
-        string[] candidates = faceName switch
+        var candidates = faceName switch
         {
             Bold => BoldCandidates,
             Italic => ItalicCandidates,
@@ -104,7 +104,7 @@ public sealed class CommandPdfFontResolver : IFontResolver
             _ => RegularCandidates,
         };
 
-        byte[]? data = this.LoadFirstAvailable(candidates);
+        var data = this.LoadFirstAvailable(candidates);
 
         if (data is null)
         {
@@ -118,7 +118,7 @@ public sealed class CommandPdfFontResolver : IFontResolver
     /// <inheritdoc />
     public FontResolverInfo? ResolveTypeface(string familyName, bool isBold, bool isItalic)
     {
-        string faceName = (isBold, isItalic) switch
+        var faceName = (isBold, isItalic) switch
         {
             (true, _) => Bold,
             (_, true) => Italic,
@@ -138,9 +138,9 @@ public sealed class CommandPdfFontResolver : IFontResolver
 
     private byte[]? LoadFirstAvailable(IEnumerable<string> candidates)
     {
-        foreach (string candidate in candidates)
+        foreach (var candidate in candidates)
         {
-            byte[]? data = this.TryLoad(candidate);
+            var data = this.TryLoad(candidate);
 
             if (data is not null)
             {
@@ -155,7 +155,7 @@ public sealed class CommandPdfFontResolver : IFontResolver
     {
         if (this.fontDirectory is not null)
         {
-            string path = Path.Combine(this.fontDirectory, fileName);
+            var path = Path.Combine(this.fontDirectory, fileName);
 
             if (File.Exists(path))
             {
@@ -163,9 +163,9 @@ public sealed class CommandPdfFontResolver : IFontResolver
             }
         }
 
-        foreach (string directory in GetSystemFontDirectories())
+        foreach (var directory in GetSystemFontDirectories())
         {
-            string path = Path.Combine(directory, fileName);
+            var path = Path.Combine(directory, fileName);
 
             if (File.Exists(path))
             {

@@ -47,7 +47,7 @@ public sealed class ExplorerCommandDispatcher
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        CommandInvoker invoker = Invokers.GetOrAdd(command.GetType(), CreateInvoker);
+        var invoker = Invokers.GetOrAdd(command.GetType(), CreateInvoker);
 
         return invoker(this.services, command, cancellationToken);
     }
@@ -62,7 +62,7 @@ public sealed class ExplorerCommandDispatcher
     /// </remarks>
     private static CommandInvoker CreateInvoker(Type commandType)
     {
-        Type? resultType = commandType
+        var resultType = commandType
             .GetInterfaces()
             .Where(type => type.IsGenericType
                            && type.GetGenericTypeDefinition() == typeof(IExplorerCommand<>))
@@ -76,9 +76,9 @@ public sealed class ExplorerCommandDispatcher
                 + $"{nameof(IExplorerCommand)}<TResult> nicht und kann nicht ausgeführt werden.");
         }
 
-        Type handlerType = typeof(IExplorerCommandHandler<,>).MakeGenericType(commandType, resultType);
+        var handlerType = typeof(IExplorerCommandHandler<,>).MakeGenericType(commandType, resultType);
 
-        MethodInfo handleMethod = handlerType.GetMethod(nameof(IExplorerCommandHandler<IExplorerCommand<object>, object>.HandleAsync))
+        var handleMethod = handlerType.GetMethod(nameof(IExplorerCommandHandler<IExplorerCommand<object>, object>.HandleAsync))
                                   ?? throw new InvalidOperationException(
                                       $"Am Handler-Typ '{handlerType.FullName}' wurde keine "
                                       + $"'{nameof(IExplorerCommandHandler<IExplorerCommand<object>, object>.HandleAsync)}'-"
@@ -86,12 +86,12 @@ public sealed class ExplorerCommandDispatcher
 
         return async (services, command, cancellationToken) =>
         {
-            object? handler = services.GetService(handlerType)
+            var handler = services.GetService(handlerType)
                               ?? throw new InvalidOperationException(
                                   $"Für das Command '{commandType.Name}' ist kein Handler registriert. "
                                   + $"Registriere '{handlerType.Name}' im DI-Container.");
 
-            object? task = handleMethod.Invoke(handler, [command, cancellationToken]);
+            var task = handleMethod.Invoke(handler, [command, cancellationToken]);
 
             if (task is not Task resultTask)
             {

@@ -47,11 +47,11 @@ public sealed class GetDocumentationVaultCommandHandler
         GetDocumentationVaultCommand command,
         CancellationToken cancellationToken)
     {
-        IReadOnlyList<CommandDescriptor> commands = ScopeResolver.Resolve(this.provider, command.Scope);
-        string title = ScopeResolver.ResolveTitle(this.options.Value.DocumentationTitle, command.Scope);
+        var commands = ScopeResolver.Resolve(this.provider, command.Scope);
+        var title = ScopeResolver.ResolveTitle(this.options.Value.DocumentationTitle, command.Scope);
 
-        IReadOnlyDictionary<string, string> files = this.generator.Generate(commands, title);
-        byte[] archive = VaultArchiveBuilder.Build(
+        var files = this.generator.Generate(commands, title);
+        var archive = VaultArchiveBuilder.Build(
             files,
             MarkdownVaultGenerator.SanitizeFileName(title));
 
@@ -100,10 +100,10 @@ public sealed class GetDocumentationPdfCommandHandler
         GetDocumentationPdfCommand command,
         CancellationToken cancellationToken)
     {
-        IReadOnlyList<CommandDescriptor> commands = ScopeResolver.Resolve(this.provider, command.Scope);
-        string title = ScopeResolver.ResolveTitle(this.options.Value.DocumentationTitle, command.Scope);
+        var commands = ScopeResolver.Resolve(this.provider, command.Scope);
+        var title = ScopeResolver.ResolveTitle(this.options.Value.DocumentationTitle, command.Scope);
 
-        byte[] pdf = this.generator.Generate(commands, title);
+        var pdf = this.generator.Generate(commands, title);
 
         return Task.FromResult(FileModel.FromBytes(
             pdf,
@@ -150,23 +150,23 @@ public sealed class GetDocumentationMarkdownCommandHandler
         GetDocumentationMarkdownCommand command,
         CancellationToken cancellationToken)
     {
-        IReadOnlyList<CommandDescriptor> commands = ScopeResolver.Resolve(this.provider, command.Scope);
-        string title = ScopeResolver.ResolveTitle(this.options.Value.DocumentationTitle, command.Scope);
+        var commands = ScopeResolver.Resolve(this.provider, command.Scope);
+        var title = ScopeResolver.ResolveTitle(this.options.Value.DocumentationTitle, command.Scope);
 
-        IReadOnlyDictionary<string, string> files = this.generator.Generate(commands, title);
+        var files = this.generator.Generate(commands, title);
 
         // Alle Notizen zu einem Dokument zusammenfassen – praktisch für Wikis ohne Obsidian.
         // Nur die Startseite behält ihr Frontmatter; bei den übrigen Notizen wäre ein zweiter
         // Frontmatter-Block mitten im Dokument wirkungslos und würde als doppelte `---`-Linie
         // erscheinen.
-        string combined = string.Join(
+        var combined = string.Join(
             "\n\n---\n\n",
             files
                 .Where(entry => entry.Key != "00 Start.md")
                 .OrderBy(entry => entry.Key, StringComparer.Ordinal)
                 .Select(entry => ScopeResolver.StripFrontMatter(entry.Value)));
 
-        string document = files["00 Start.md"] + "\n\n---\n\n" + combined;
+        var document = files["00 Start.md"] + "\n\n---\n\n" + combined;
 
         return Task.FromResult(FileModel.FromBytes(
             Encoding.UTF8.GetBytes(document),
@@ -213,11 +213,11 @@ public sealed class GetTypeScriptCommandHandler
         GetTypeScriptCommand command,
         CancellationToken cancellationToken)
     {
-        IReadOnlyList<Type> types = ScopeResolver.ResolveTypes(this.provider, command.Scope);
-        IReadOnlyDictionary<string, string> files = this.generator.Generate(types);
-        string title = ScopeResolver.ResolveTitle(this.options.Value.DocumentationTitle, command.Scope);
+        var types = ScopeResolver.ResolveTypes(this.provider, command.Scope);
+        var files = this.generator.Generate(types);
+        var title = ScopeResolver.ResolveTitle(this.options.Value.DocumentationTitle, command.Scope);
 
-        byte[] archive = ZipArchiveBuilder.Build(
+        var archive = ZipArchiveBuilder.Build(
             files,
             MarkdownVaultGenerator.SanitizeFileName(title));
 
@@ -262,7 +262,7 @@ public sealed class GetFrameworkCommandHandler
         GetFrameworkCommand command,
         CancellationToken cancellationToken)
     {
-        IReadOnlyDictionary<string, string>? files = this.provider.GetTemplates(command.Framework);
+        var files = this.provider.GetTemplates(command.Framework);
 
         if (files is null)
         {
@@ -270,9 +270,9 @@ public sealed class GetFrameworkCommandHandler
                 $"Für das Framework '{command.Framework}' sind keine Vorlagen hinterlegt.");
         }
 
-        string title = $"{this.options.Value.DocumentationTitle} - {command.Framework}";
+        var title = $"{this.options.Value.DocumentationTitle} - {command.Framework}";
 
-        byte[] archive = ZipArchiveBuilder.Build(
+        var archive = ZipArchiveBuilder.Build(
             files,
             MarkdownVaultGenerator.SanitizeFileName(title));
 

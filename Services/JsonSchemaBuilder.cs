@@ -25,7 +25,7 @@ public sealed class JsonSchemaBuilder
         JsonObject properties = [];
         JsonArray required = [];
 
-        foreach (CommandPropertyDescriptor property in command.Properties)
+        foreach (var property in command.Properties)
         {
             properties[property.JsonName] = this.BuildPropertySchema(property);
 
@@ -70,7 +70,7 @@ public sealed class JsonSchemaBuilder
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        JsonObject schema = this.BuildPropertySchema(result);
+        var schema = this.BuildPropertySchema(result);
         schema["$schema"] = Draft;
         schema["title"] = title;
 
@@ -94,10 +94,10 @@ public sealed class JsonSchemaBuilder
             schema["description"] = property.Summary;
         }
 
-        JsonNode? typeSchema = this.BuildTypeSchema(property);
+        var typeSchema = this.BuildTypeSchema(property);
         if (typeSchema is JsonObject typeObject)
         {
-            foreach (KeyValuePair<string, JsonNode?> entry in typeObject.ToList())
+            foreach (var entry in typeObject.ToList())
             {
                 typeObject.Remove(entry.Key);
                 schema[entry.Key] = entry.Value;
@@ -155,9 +155,9 @@ public sealed class JsonSchemaBuilder
     {
         JsonArray values = [];
 
-        foreach (CommandEnumValue entry in property.EnumValues)
+        foreach (var entry in property.EnumValues)
         {
-            values.Add(int.TryParse(entry.Value, out int numeric) ? numeric : entry.Value);
+            values.Add(int.TryParse(entry.Value, out var numeric) ? numeric : entry.Value);
         }
 
         JsonObject schema = new()
@@ -169,7 +169,7 @@ public sealed class JsonSchemaBuilder
         if (property.EnumValues.Count > 0)
         {
             JsonObject names = [];
-            foreach (CommandEnumValue entry in property.EnumValues)
+            foreach (var entry in property.EnumValues)
             {
                 names[entry.Value] = entry.Name;
             }
@@ -197,7 +197,7 @@ public sealed class JsonSchemaBuilder
         JsonObject properties = [];
         JsonArray required = [];
 
-        foreach (CommandPropertyDescriptor field in property.Properties)
+        foreach (var field in property.Properties)
         {
             properties[field.JsonName] = this.BuildPropertySchema(field);
 

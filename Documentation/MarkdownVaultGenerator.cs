@@ -26,11 +26,11 @@ public sealed class MarkdownVaultGenerator
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
 
         Dictionary<string, string> files = new(StringComparer.OrdinalIgnoreCase);
-        IReadOnlyList<DocNode> tree = BuildTree(commands);
+        var tree = BuildTree(commands);
 
         files["00 Start.md"] = this.BuildIndex(commands, tree, title);
 
-        foreach (IGrouping<string, CommandDescriptor> group in commands
+        foreach (var group in commands
                      .GroupBy(command => command.Namespace)
                      .OrderBy(group => group.Key, StringComparer.Ordinal))
         {
@@ -38,7 +38,7 @@ public sealed class MarkdownVaultGenerator
                 this.BuildNamespaceNote(group.Key, [.. group], tree);
         }
 
-        foreach (CommandDescriptor command in commands.OrderBy(c => c.Name, StringComparer.Ordinal))
+        foreach (var command in commands.OrderBy(c => c.Name, StringComparer.Ordinal))
         {
             files[$"Commands/{SanitizeFileName(command.Name)}.md"] = this.BuildCommandNote(command);
         }
@@ -63,15 +63,15 @@ public sealed class MarkdownVaultGenerator
     {
         DocNode root = new();
 
-        foreach (CommandDescriptor command in commands)
+        foreach (var command in commands)
         {
-            IReadOnlyList<string> segments = SplitNamespace(command.Namespace);
+            var segments = SplitNamespace(command.Namespace);
 
-            DocNode current = root;
+            var current = root;
 
-            foreach (string segment in segments)
+            foreach (var segment in segments)
             {
-                DocNode? child = current.Children.FirstOrDefault(c => c.Name == segment);
+                var child = current.Children.FirstOrDefault(c => c.Name == segment);
 
                 if (child is null)
                 {
@@ -101,7 +101,7 @@ public sealed class MarkdownVaultGenerator
         node.Children.Sort((left, right) => string.CompareOrdinal(left.Name, right.Name));
         node.Commands.Sort((left, right) => string.CompareOrdinal(left.Name, right.Name));
 
-        foreach (DocNode child in node.Children)
+        foreach (var child in node.Children)
         {
             Sort(child);
         }
@@ -123,7 +123,7 @@ public sealed class MarkdownVaultGenerator
     private static (string Name, DocNode Target) Collapse(DocNode node)
     {
         StringBuilder name = new(node.Name);
-        DocNode current = node;
+        var current = node;
 
         while (current.Commands.Count == 0 && current.Children.Count == 1)
         {
@@ -137,18 +137,18 @@ public sealed class MarkdownVaultGenerator
     private void AppendTree(StringBuilder builder, DocNode node, int depth)
     {
         string indent = new(' ', depth * 2);
-        (string name, DocNode target) = Collapse(node);
+        (var name, var target) = Collapse(node);
 
         builder.AppendLine($"{indent}- 📁 **{name}** ({target.TotalCount})");
 
-        foreach (CommandDescriptor command in target.Commands)
+        foreach (var command in target.Commands)
         {
             builder.AppendLine(
                 $"{indent}  - [[{SanitizeFileName(command.Name)}]]"
                 + $" – {EscapeCell(command.Authorization.Description)}");
         }
 
-        foreach (DocNode child in target.Children)
+        foreach (var child in target.Children)
         {
             this.AppendTree(builder, child, depth + 1);
         }
@@ -180,7 +180,7 @@ public sealed class MarkdownVaultGenerator
         builder.AppendLine("seine Notiz.");
         builder.AppendLine();
 
-        foreach (DocNode node in tree)
+        foreach (var node in tree)
         {
             this.AppendTree(builder, node, 0);
         }
@@ -191,7 +191,7 @@ public sealed class MarkdownVaultGenerator
         builder.AppendLine("| Command | Namespace | Response Type | Autorisierung |");
         builder.AppendLine("| --- | --- | --- | --- |");
 
-        foreach (CommandDescriptor command in commands.OrderBy(c => c.Name, StringComparer.Ordinal))
+        foreach (var command in commands.OrderBy(c => c.Name, StringComparer.Ordinal))
         {
             builder.AppendLine(
                 $"| [[{SanitizeFileName(command.Name)}]] "
@@ -235,14 +235,14 @@ public sealed class MarkdownVaultGenerator
         builder.AppendLine($"Enthält {commands.Count} Commands.");
         builder.AppendLine();
 
-        DocNode? node = FindNode(tree, @namespace);
+        var node = FindNode(tree, @namespace);
 
         if (node is not null && node.Children.Count > 0)
         {
             builder.AppendLine("## Untergeordnete Namespaces");
             builder.AppendLine();
 
-            foreach (DocNode child in node.Children)
+            foreach (var child in node.Children)
             {
                 builder.AppendLine(
                     $"- [[{SanitizeFileName(child.FullName)}]] – {child.TotalCount} Commands");
@@ -256,7 +256,7 @@ public sealed class MarkdownVaultGenerator
         builder.AppendLine("| Command | Response Type | Autorisierung |");
         builder.AppendLine("| --- | --- | --- |");
 
-        foreach (CommandDescriptor command in commands.OrderBy(c => c.Name, StringComparer.Ordinal))
+        foreach (var command in commands.OrderBy(c => c.Name, StringComparer.Ordinal))
         {
             builder.AppendLine(
                 $"| [[{SanitizeFileName(command.Name)}]] "
@@ -272,14 +272,14 @@ public sealed class MarkdownVaultGenerator
 
     private static DocNode? FindNode(IReadOnlyList<DocNode> nodes, string fullName)
     {
-        foreach (DocNode node in nodes)
+        foreach (var node in nodes)
         {
             if (string.Equals(node.FullName, fullName, StringComparison.Ordinal))
             {
                 return node;
             }
 
-            DocNode? found = FindNode(node.Children, fullName);
+            var found = FindNode(node.Children, fullName);
 
             if (found is not null)
             {
@@ -313,7 +313,7 @@ public sealed class MarkdownVaultGenerator
         if (!string.IsNullOrWhiteSpace(command.Remarks))
         {
             builder.AppendLine("> [!note] Hinweise");
-            foreach (string line in command.Remarks.Split('\n'))
+            foreach (var line in command.Remarks.Split('\n'))
             {
                 builder.AppendLine($"> {line.TrimEnd()}");
             }
@@ -376,14 +376,14 @@ public sealed class MarkdownVaultGenerator
             builder.AppendLine("| --- | --- | --- | --- |");
         }
 
-        foreach (CommandPropertyDescriptor property in properties)
+        foreach (var property in properties)
         {
-            string required = property.IsValueType && !property.IsNullable ? "ja" : "nein";
-            string description = EscapeCell(property.Summary ?? string.Empty);
+            var required = property.IsValueType && !property.IsNullable ? "ja" : "nein";
+            var description = EscapeCell(property.Summary ?? string.Empty);
 
             if (property.EnumValues.Count > 0)
             {
-                string values = string.Join(
+                var values = string.Join(
                     ", ",
                     property.EnumValues.Select(value => $"{value.Name} = {value.Value}"));
                 description = string.IsNullOrEmpty(description)
@@ -393,7 +393,7 @@ public sealed class MarkdownVaultGenerator
 
             // Markdown-Editoren trimmen führende Leerzeichen in Tabellenzellen,
             // deshalb wird die Einrückung mit geschützten Leerzeichen erzeugt.
-            string indent = depth == 0
+            var indent = depth == 0
                 ? string.Empty
                 : string.Concat(Enumerable.Repeat("&nbsp;&nbsp;&nbsp;", depth)) + "- ";
 
@@ -447,10 +447,10 @@ public sealed class MarkdownVaultGenerator
     /// <param name="name">Der gewünschte Dateiname ohne Endung.</param>
     internal static string SanitizeFileName(string name)
     {
-        char[] invalid = Path.GetInvalidFileNameChars();
+        var invalid = Path.GetInvalidFileNameChars();
         StringBuilder builder = new(name.Length);
 
-        foreach (char character in name)
+        foreach (var character in name)
         {
             builder.Append(invalid.Contains(character) ? '_' : character);
         }

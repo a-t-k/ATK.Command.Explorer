@@ -65,7 +65,7 @@ public sealed class CommandAuthenticationContext
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        CommandAuthenticationContext? previous = Current.Value;
+        var previous = Current.Value;
         Current.Value = context;
 
         return new Restore(previous);

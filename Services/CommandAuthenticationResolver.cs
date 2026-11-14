@@ -46,7 +46,7 @@ public sealed class CommandAuthenticationResolver
     /// <returns>Beschreibungen ohne Token.</returns>
     public IReadOnlyList<CommandAuthenticationDescriptor> GetDescriptors()
     {
-        CommandExplorerOptions current = this.options.CurrentValue;
+        var current = this.options.CurrentValue;
 
         if (!current.ShowAuthenticationSelector)
         {
@@ -88,7 +88,7 @@ public sealed class CommandAuthenticationResolver
             return new Dictionary<string, string>();
         }
 
-        CommandExplorerAuthentication? authentication = this.options.CurrentValue.Authentications
+        var authentication = this.options.CurrentValue.Authentications
             .FirstOrDefault(entry => string.Equals(entry.Id, id.Trim(), StringComparison.Ordinal));
 
         if (authentication is null)
@@ -96,7 +96,7 @@ public sealed class CommandAuthenticationResolver
             return new Dictionary<string, string>();
         }
 
-        string? token = await this.ResolveTokenAsync(authentication, cancellationToken);
+        var token = await this.ResolveTokenAsync(authentication, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -127,7 +127,7 @@ public sealed class CommandAuthenticationResolver
         if (authentication.Type == CommandExplorerAuthenticationType.Basic
             && !string.IsNullOrWhiteSpace(authentication.UserName))
         {
-            string raw = $"{authentication.UserName}:{authentication.Password}";
+            var raw = $"{authentication.UserName}:{authentication.Password}";
             return Convert.ToBase64String(Encoding.UTF8.GetBytes(raw));
         }
 
@@ -161,7 +161,7 @@ public sealed class CommandAuthenticationResolver
                 break;
 
             case CommandExplorerAuthenticationType.Custom:
-                string prefix = authentication.Prefix ?? string.Empty;
+                var prefix = authentication.Prefix ?? string.Empty;
                 headers[ResolveHeaderName(authentication)] = prefix.Length == 0
                     ? token
                     : $"{prefix}{token}";

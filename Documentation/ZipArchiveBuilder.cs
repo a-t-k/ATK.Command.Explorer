@@ -26,9 +26,9 @@ public static class ZipArchiveBuilder
 
         using (ZipArchive archive = new(stream, ZipArchiveMode.Create, leaveOpen: true))
         {
-            foreach ((string name, string content) in files)
+            foreach ((var name, var content) in files)
             {
-                string path = string.IsNullOrWhiteSpace(rootFolder)
+                var path = string.IsNullOrWhiteSpace(rootFolder)
                     ? name
                     : $"{rootFolder}/{name}";
 
@@ -50,9 +50,9 @@ public static class ZipArchiveBuilder
         ArgumentNullException.ThrowIfNull(archive);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
-        ZipArchiveEntry entry = archive.CreateEntry(path, CompressionLevel.Optimal);
+        var entry = archive.CreateEntry(path, CompressionLevel.Optimal);
 
-        using Stream entryStream = entry.Open();
+        using var entryStream = entry.Open();
         using StreamWriter writer = new(entryStream, new UTF8Encoding(false));
         writer.Write(content);
     }

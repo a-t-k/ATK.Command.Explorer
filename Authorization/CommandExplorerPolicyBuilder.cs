@@ -45,9 +45,9 @@ public static class CommandExplorerPolicyBuilder
         }
 
         // Referenzierte Policies werden aufgelöst und ihre Anforderungen übernommen.
-        foreach (string policyName in options.Policies)
+        foreach (var policyName in options.Policies)
         {
-            AuthorizationPolicy? referenced = authorizationOptions.GetPolicy(policyName);
+            var referenced = authorizationOptions.GetPolicy(policyName);
 
             if (referenced is null)
             {

@@ -55,7 +55,7 @@ public sealed class TypeScriptExportGenerator
     {
         ArgumentNullException.ThrowIfNull(commands);
 
-        Type[] types = commands.Count == 0
+        var types = commands.Count == 0
             ? this.GetAllCommandTypes()
             : commands.ToArray();
 
@@ -64,7 +64,7 @@ public sealed class TypeScriptExportGenerator
             return new Dictionary<string, string>(StringComparer.Ordinal);
         }
 
-        string directory = Path.Combine(
+        var directory = Path.Combine(
             Path.GetTempPath(),
             $"atk-ts-export-{Guid.NewGuid():N}");
 
@@ -72,7 +72,7 @@ public sealed class TypeScriptExportGenerator
         {
             Directory.CreateDirectory(directory);
 
-            BuildedSeparatedFiles built = new Generator()
+            var built = new Generator()
                 .TypeScript()
                 .SeparatedFiles()
                 .SetRequestCommandInterfaceNameForGeneratedCommands("ICommand")
@@ -107,15 +107,15 @@ public sealed class TypeScriptExportGenerator
     {
         Dictionary<string, string> files = new(StringComparer.Ordinal);
 
-        foreach (string path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+        foreach (var path in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
         {
-            string relative = Path.GetRelativePath(directory, path).Replace('\\', '/');
+            var relative = Path.GetRelativePath(directory, path).Replace('\\', '/');
             files[relative] = File.ReadAllText(path);
         }
 
         // Der Generator liefert zusätzlich den C#-Quelltext seiner Eingaben. Der gehört
         // nicht in einen TypeScript-Export.
-        foreach (BuildFile file in built.BuildFiles)
+        foreach (var file in built.BuildFiles)
         {
             if (file.BuildFiLeType == BuildFiLeType.GeneratedCSharpSource)
             {

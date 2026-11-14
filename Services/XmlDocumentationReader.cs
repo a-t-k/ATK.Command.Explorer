@@ -23,7 +23,7 @@ public sealed class XmlDocumentationReader
     {
         ArgumentNullException.ThrowIfNull(assembly);
 
-        string path = Path.Combine(AppContext.BaseDirectory, $"{assembly.GetName().Name}.xml");
+        var path = Path.Combine(AppContext.BaseDirectory, $"{assembly.GetName().Name}.xml");
         if (!File.Exists(path))
         {
             return;
@@ -31,22 +31,22 @@ public sealed class XmlDocumentationReader
 
         try
         {
-            XDocument document = XDocument.Load(path);
-            foreach (XElement member in document.Descendants("member"))
+            var document = XDocument.Load(path);
+            foreach (var member in document.Descendants("member"))
             {
-                string? name = member.Attribute("name")?.Value;
+                var name = member.Attribute("name")?.Value;
                 if (string.IsNullOrWhiteSpace(name))
                 {
                     continue;
                 }
 
-                string? summary = Normalize(member.Element("summary")?.Value);
+                var summary = Normalize(member.Element("summary")?.Value);
                 if (!string.IsNullOrWhiteSpace(summary))
                 {
                     this.summaries[name] = summary;
                 }
 
-                string? remark = Normalize(member.Element("remarks")?.Value);
+                var remark = Normalize(member.Element("remarks")?.Value);
                 if (!string.IsNullOrWhiteSpace(remark))
                 {
                     this.remarks[name] = remark;
@@ -84,7 +84,7 @@ public sealed class XmlDocumentationReader
         this.Lookup(this.summaries, $"F:{field.DeclaringType?.FullName}.{field.Name}");
 
     private string? Lookup(Dictionary<string, string> source, string key) =>
-        source.TryGetValue(key, out string? value) ? value : null;
+        source.TryGetValue(key, out var value) ? value : null;
 
     private static string? Normalize(string? text)
     {
@@ -93,7 +93,7 @@ public sealed class XmlDocumentationReader
             return null;
         }
 
-        string[] lines = text
+        var lines = text
             .Split('\n')
             .Select(line => line.Trim())
             .Where(line => line.Length > 0)

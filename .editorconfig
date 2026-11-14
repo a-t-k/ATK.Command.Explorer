@@ -67,9 +67,10 @@ csharp_style_pattern_matching_over_is_with_cast_check = true:warning
 csharp_style_pattern_matching_over_as_with_null_check = true:warning
 csharp_style_prefer_not_pattern = true:suggestion
 csharp_style_prefer_extended_property_pattern = true:suggestion
-csharp_style_var_for_built_in_types = false:silent
+# Ist der Typ aus der Zuweisung ersichtlich, wird 'var' verwendet.
+csharp_style_var_for_built_in_types = true:warning
 csharp_style_var_when_type_is_apparent = true:warning
-csharp_style_var_elsewhere = true:suggestion
+csharp_style_var_elsewhere = true:warning
 
 ##########################################
 # File Extension Settings
@@ -195,9 +196,10 @@ dotnet_style_prefer_simplified_interpolation = true:warning
 [*.{cs,csx,cake}]
 # Implicit and explicit types
 # https://docs.microsoft.com/visualstudio/ide/editorconfig-language-conventions#implicit-and-explicit-types
-csharp_style_var_for_built_in_types = never
+# Ist der Typ aus der Zuweisung ersichtlich, wird 'var' verwendet.
+csharp_style_var_for_built_in_types = true:warning
 csharp_style_var_when_type_is_apparent = true:warning
-csharp_style_var_elsewhere = true:suggestion
+csharp_style_var_elsewhere = true:warning
 # Expression-bodied members
 # https://docs.microsoft.com/visualstudio/ide/editorconfig-language-conventions#expression-bodied-members
 csharp_style_expression_bodied_methods = true:silent

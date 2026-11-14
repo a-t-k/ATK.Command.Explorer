@@ -81,17 +81,17 @@ public sealed class CommandExplorerController : ControllerBase
             return this.BadRequest(this.ModelState);
         }
 
-        string? authenticationId = this.Request.Headers[
+        var authenticationId = this.Request.Headers[
             this.options.Value.AuthenticationHeaderName].FirstOrDefault();
 
-        IReadOnlyDictionary<string, string> authHeaders =
+        var authHeaders =
             await this.authenticationResolver.ResolveHeadersAsync(authenticationId, cancellationToken);
 
         CommandAuthenticationContext context = new(authenticationId, authHeaders);
 
-        using IDisposable scope = CommandAuthenticationContext.Begin(context);
+        using var scope = CommandAuthenticationContext.Begin(context);
 
-        object? result = await this.dispatcher.ExecuteAsync(command, cancellationToken);
+        var result = await this.dispatcher.ExecuteAsync(command, cancellationToken);
 
         return result is null ? this.Ok() : this.Ok(result);
     }
