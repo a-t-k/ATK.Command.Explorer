@@ -87,6 +87,125 @@ public class SayHelloCommand : ICommand<string>, IRequestCommand { }
 > Der Explorer zeigt dieselbe Einstufung in `CommandAuthorizationInfo`:
 > `AllowAnonymous`, `RequiresAuthentication`, `Roles`, `Policies`, `Claims`.
 
+## Authentifizierungen für die UI (Dropdown)
+
+Der Explorer kann mehrere Authentifizierungen bereitstellen, die in der UI als Dropdown
+ausgewählt werden. Die Auswahl gilt für die nächste Command-Ausführung und lässt sich
+jederzeit wechseln – ideal, um dasselbe Command mit verschiedenen Konten zu testen.
+
+**Der Token verlässt den Server nie.** Die UI kennt nur `Id`, `Name` und `Type`; das Backend
+setzt den passenden Header.
+
+### Variante 1: statisch über die Konfiguration
+
+```json
+{
+  "CommandExplorer": {
+    "Authentications": [
+      {
+        "Id": "admin",
+        "Name": "Admin (tenant=acme)",
+        "Type": "Bearer",
+        "Token": "eyJhbGciOi..."
+      },
+      {
+        "Id": "apikey",
+        "Name": "API-Key",
+        "Type": "ApiKey",
+        "HeaderName": "X-Api-Key",
+        "Token": "geheim"
+      },
+      {
+        "Id": "basic",
+        "Name": "Basic",
+        "Type": "Basic",
+        "UserName": "tester",
+        "Password": "geheim"
+      }
+    ]
+  }
+}
+```
+
+### Variante 2: dynamisch im Code (Lambda)
+
+Für Tokens, die zur Laufzeit beschafft werden müssen – etwa aus einem Identity-Service,
+per Client-Credentials oder aus der Datenbank:
+
+```csharp
+builder.Services.AddCommandExplorer&lt;Program, IRequestCommand&gt;(options =&gt;
+{
+    options.Authentications.Add(new CommandExplorerAuthentication
+    {
+        Id = "service",
+        Name = "Service-Konto",
+        Type = CommandExplorerAuthenticationType.Bearer,
+        TokenFactory = async (services, ct) =&gt;
+        {
+            ITokenService tokens = services.GetRequiredService&lt;ITokenService&gt;();
+            return await tokens.GetAccessTokenAsync(ct);
+        }
+    });
+});
+```
+
+`TokenFactory` hat Vorrang vor `Token` und wird bei **jeder** Anfrage aufgerufen – ein Cache
+ist Sache der Anwendung. Beide Varianten lassen sich mischen.
+
+### Typen
+
+| `Type` | Header | Token-Bedarf |
+| --- | --- | --- |
+| `None` | – | keiner |
+| `Bearer` | `Authorization: Bearer <token>` | `Token` oder `TokenFactory` |
+| `Basic` | `Authorization: Basic <base64>` | `Token` (base64) oder `UserName`/`Password` |
+| `ApiKey` | `<HeaderName>: <token>` (Standard `X-Api-Key`) | `Token` oder `TokenFactory` |
+| `Custom` | `<HeaderName>: <Prefix><token>` | `Token` oder `TokenFactory` |
+
+### Ablauf
+
+```
+1. UI lädt GET /commands/explorer/authentications
+   → [{ id, name, type, headerName, isDynamic }]   (ohne Token)
+
+2. Benutzer wählt im Dropdown eine Id
+
+3. UI sendet POST /commands/explorer/execute?authenticationId=<id>
+   → Body unverändert durchgereicht
+
+4. Explorer-Controller
+   → CommandAuthenticationResolver.ResolveHeadersAsync(id)
+   → Token aus Konfiguration oder TokenFactory
+   → Header bauen (Bearer/Basic/ApiKey/Custom)
+
+5. Server leitet an CommandEndpoint (Standard "commands") weiter
+   → gleiche Origin, gleiches Schema
+   → Antwort unverändert zurück (Status, Content-Type, Body)
+```
+
+### Warum ein Proxy?
+
+Der Browser kann die Header nicht selbst setzen, ohne den Token zu kennen. Ein Proxy löst das:
+Die UI sendet nur die `Id`, der Server holt den Token und setzt den Header. Dadurch taucht der
+Token nie im Browser auf – auch nicht im Netzwerk-Tab oder in den DevTools.
+
+### Validierung beim Start
+
+Fehlerhafte Einträge fallen sofort beim Start auf, nicht erst beim Ausführen:
+
+- leere `Id`
+- doppelte `Id`
+- Typ verlangt Token, aber weder `Token` noch `TokenFactory` gesetzt
+
+### Neue Optionen
+
+| Option | Standard | Zweck |
+| --- | --- | --- |
+| `Authentications` | leer | Liste der auswählbaren Authentifizierungen |
+| `AuthenticationHeaderName` | `X-Explorer-Auth` | Header, über den die UI die Id meldet |
+| `ShowAuthenticationSelector` | `true` | Dropdown anzeigen (auch ohne Einträge unsichtbar) |
+| `CommandEndpoint` | `commands` | Ziel des Proxys, relativ zur aktuellen Origin |
+
 ## Optionen
 
 Abschnitt `CommandExplorer` in `appsettings.json`:

@@ -126,6 +126,64 @@ public sealed class CommandExplorerOptions
     public string? FontDirectory { get; set; }
 
     /// <summary>
+    /// Authentifizierungen, die die UI beim Ausführen von Commands zur Auswahl anbietet.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Die Liste kann vollständig aus der Konfiguration kommen (Abschnitt
+    /// <c>CommandExplorer:Authentications</c>) oder im Code ergänzt werden. Beide Wege lassen
+    /// sich mischen: Konfigurationseinträge werden zuerst geladen, im Code hinzugefügte
+    /// Einträge kommen hinzu.
+    /// </para>
+    /// <para>
+    /// Die UI zeigt die Einträge als Dropdown. Der gewählte Eintrag wird bei jeder
+    /// Command-Ausführung über den Header <c>X-Explorer-Auth</c> an das Backend gemeldet;
+    /// das Backend setzt daraufhin den passenden Authentifizierungs-Header. Der Token selbst
+    /// verlässt den Server nie.
+    /// </para>
+    /// <para>
+    /// Ist die Liste leer, zeigt die UI kein Dropdown und es wird kein Auth-Header gesetzt.
+    /// </para>
+    /// </remarks>
+    public IList<CommandExplorerAuthentication> Authentications { get; set; } = [];
+
+    /// <summary>
+    /// Name des Headers, über den die UI die gewählte Authentifizierung meldet.
+    /// </summary>
+    /// <remarks>
+    /// Standard ist <c>X-Explorer-Auth</c>. Der Wert ist die <c>Id</c> eines Eintrags aus
+    /// <see cref="Authentications"/>.
+    /// </remarks>
+    public string AuthenticationHeaderName { get; set; } = "X-Explorer-Auth";
+
+    /// <summary>
+    /// Gibt an, ob die UI das Dropdown für Authentifizierungen anzeigt.
+    /// </summary>
+    /// <remarks>
+    /// Wird automatisch abgeleitet: <c>true</c>, sobald <see cref="Authentications"/> Einträge
+    /// enthält. Kann explizit auf <c>false</c> gesetzt werden, um das Dropdown zu verbergen,
+    /// ohne die Einträge zu entfernen.
+    /// </remarks>
+    public bool ShowAuthenticationSelector { get; set; } = true;
+
+    /// <summary>
+    /// Relativer Pfad des Command-Endpunkts der Anwendung.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Der Explorer leitet Command-Ausführungen serverseitig an diesen Pfad weiter, weil nur
+    /// so die Authentifizierungs-Header gesetzt werden können, ohne den Token an den Browser
+    /// auszuliefern. Standard ist <c>commands</c> – also derselbe Endpunkt, den die UI
+    /// normalerweise direkt aufruft.
+    /// </para>
+    /// <para>
+    /// Der Wert wird ohne führenden Schrägstrich erwartet und relativ zur aktuellen Anfrage
+    /// aufgelöst (gleiche Origin, gleiches Schema).
+    /// </para>
+    /// </remarks>
+    public string CommandEndpoint { get; set; } = "commands";
+
+    /// <summary>
     /// Name der Policy, die der Explorer für seine Endpunkte verwendet.
     /// </summary>
     /// <remarks>

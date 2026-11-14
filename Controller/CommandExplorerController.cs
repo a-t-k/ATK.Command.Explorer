@@ -26,6 +26,8 @@ public sealed class CommandExplorerController : ControllerBase
     private readonly CommandPdfGenerator pdfGenerator;
     private readonly TypeScriptExportGenerator typeScriptGenerator;
     private readonly FrameworkTemplateProvider frameworkProvider;
+    private readonly CommandAuthenticationResolver authenticationResolver;
+    private readonly IHttpClientFactory httpClientFactory;
     private readonly IOptions<CommandExplorerOptions> options;
 
     /// <summary>
@@ -36,6 +38,8 @@ public sealed class CommandExplorerController : ControllerBase
     /// <param name="pdfGenerator">Erzeugt das PDF.</param>
     /// <param name="typeScriptGenerator">Erzeugt den TypeScript-Export.</param>
     /// <param name="frameworkProvider">Liefert die Framework-Vorlagen.</param>
+    /// <param name="authenticationResolver">Löst die gewählte Authentifizierung auf.</param>
+    /// <param name="httpClientFactory">Erzeugt den Client für den Command-Proxy.</param>
     /// <param name="options">Die Explorer-Optionen.</param>
     public CommandExplorerController(
         CommandMetadataProvider provider,
@@ -43,6 +47,8 @@ public sealed class CommandExplorerController : ControllerBase
         CommandPdfGenerator pdfGenerator,
         TypeScriptExportGenerator typeScriptGenerator,
         FrameworkTemplateProvider frameworkProvider,
+        CommandAuthenticationResolver authenticationResolver,
+        IHttpClientFactory httpClientFactory,
         IOptions<CommandExplorerOptions> options)
     {
         this.provider = provider;
@@ -50,6 +56,8 @@ public sealed class CommandExplorerController : ControllerBase
         this.pdfGenerator = pdfGenerator;
         this.typeScriptGenerator = typeScriptGenerator;
         this.frameworkProvider = frameworkProvider;
+        this.authenticationResolver = authenticationResolver;
+        this.httpClientFactory = httpClientFactory;
         this.options = options;
     }
 
@@ -83,6 +91,107 @@ public sealed class CommandExplorerController : ControllerBase
     {
         CommandDescriptor? command = this.provider.GetCommand(name);
         return command is null ? this.NotFound() : this.Ok(command);
+    }
+
+    /// <summary>
+    /// Liefert die konfigurierten Authentifizierungen für das Dropdown der UI.
+    /// </summary>
+    /// <returns>Beschreibungen ohne Token.</returns>
+    /// <remarks>
+    /// Der Token bleibt im Backend. Die UI erhält nur <c>Id</c>, <c>Name</c>, <c>Type</c> und
+    /// den Headernamen, damit sie die Auswahl anzeigen kann.
+    /// </remarks>
+    [HttpGet("authentications")]
+    [ProducesResponseType(
+        typeof(IReadOnlyList<CommandAuthenticationDescriptor>),
+        StatusCodes.Status200OK)]
+    public ActionResult<IReadOnlyList<CommandAuthenticationDescriptor>> GetAuthentications() =>
+        this.Ok(this.authenticationResolver.GetDescriptors());
+
+    /// <summary>
+    /// Führt ein Command im Auftrag der UI aus und setzt dabei die gewählte Authentifizierung.
+    /// </summary>
+    /// <param name="authenticationId">
+    /// <c>Id</c> der gewählten Authentifizierung. <c>null</c> oder leer bedeutet „ohne“.
+    /// </param>
+    /// <param name="cancellationToken">Abbruch-Token.</param>
+    /// <returns>
+    /// Status, Content-Type und Body der Antwort des Command-Endpunkts – unverändert
+    /// weitergereicht.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// Warum ein Proxy und kein direkter Aufruf aus dem Browser: Der Token darf den Server
+    /// nicht verlassen. Die UI kennt nur die <c>Id</c>; dieses Endpunkt holt den Token,
+    /// setzt den passenden Header und leitet den Request an
+    /// <see cref="CommandExplorerOptions.CommandEndpoint"/> weiter.
+    /// </para>
+    /// <para>
+    /// Der Body wird unverändert durchgereicht, die Antwort ebenfalls – inklusive
+    /// Fehlerstatus und <c>ProblemDetails</c>. Die UI wertet sie wie eine direkte Antwort aus.
+    /// </para>
+    /// </remarks>
+    [HttpPost("execute")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult> ExecuteCommand(
+        [FromQuery] string? authenticationId,
+        CancellationToken cancellationToken)
+    {
+        IReadOnlyDictionary<string, string> authHeaders =
+            await this.authenticationResolver.ResolveHeadersAsync(authenticationId, cancellationToken);
+
+        // Body vollständig einlesen, bevor der Request weitergeleitet wird.
+        // StreamContent auf Request.Body reicht nicht: Der Stream ist nicht wiederholbar und
+        // ohne Content-Length kann der Ziel-ModelBinder den Body nicht lesen (400).
+        using MemoryStream buffer = new();
+        await this.Request.Body.CopyToAsync(buffer, cancellationToken);
+        byte[] payload = buffer.ToArray();
+
+        using HttpRequestMessage request = new(
+            HttpMethod.Post,
+            this.BuildCommandUri());
+
+        request.Content = new ByteArrayContent(payload);
+        request.Content.Headers.ContentType =
+            System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+
+        foreach (KeyValuePair<string, string> header in authHeaders)
+        {
+            request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
+
+        using HttpClient client = this.httpClientFactory.CreateClient(nameof(CommandExplorerController));
+
+        using HttpResponseMessage response = await client.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+
+        // Antwort unverändert zurückgeben: Status, Content-Type und Body.
+        string body = await response.Content.ReadAsStringAsync(cancellationToken);
+        string contentType = response.Content.Headers.ContentType?.ToString() ?? "application/json";
+
+        return new ContentResult
+        {
+            StatusCode = (int)response.StatusCode,
+            Content = body,
+            ContentType = contentType,
+        };
+    }
+
+    /// <summary>
+    /// Baut die absolute URI des Command-Endpunkts aus der aktuellen Anfrage.
+    /// </summary>
+    /// <remarks>
+    /// Gleiche Origin, gleiches Schema – dadurch funktioniert der Proxy auch hinter einem
+    /// Reverse-Proxy, ohne dass die Basis-URL konfiguriert werden muss.
+    /// </remarks>
+    private Uri BuildCommandUri()
+    {
+        HttpRequest current = this.Request;
+        string path = "/" + this.options.Value.CommandEndpoint.Trim('/');
+
+        return new Uri($"{current.Scheme}://{current.Host}{path}");
     }
 
     /// <summary>

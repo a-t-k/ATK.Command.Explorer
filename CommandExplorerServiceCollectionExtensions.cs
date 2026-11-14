@@ -79,6 +79,19 @@ public static class CommandExplorerServiceCollectionExtensions
             commandInterface,
             provider.GetRequiredService<IOptions<CommandExplorerOptions>>()));
 
+        // Authentifizierungen: löst die vom Aufrufer gewählte Id auf und baut die Header.
+        // Der Token bleibt im Backend – die UI sieht nur Id, Name und Type.
+        services.AddSingleton<CommandAuthenticationResolver>();
+
+        // Fehlerhafte Einträge fallen so beim Start auf, nicht erst beim Ausführen.
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IValidateOptions<CommandExplorerOptions>,
+                CommandExplorerOptionsValidator>());
+
+        // Wird für den Command-Proxy benötigt: Die UI kann die Auth-Header nicht selbst
+        // setzen, ohne den Token zu kennen.
+        services.AddHttpClient();
+
         // Dokumentations-Generatoren
         services.AddSingleton<MarkdownVaultGenerator>();
         services.AddSingleton(provider => new CommandPdfGenerator(
