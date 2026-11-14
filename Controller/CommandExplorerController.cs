@@ -1,5 +1,6 @@
 using ATK.Command.AspNet.ModelBinder;
 using ATK.Command.Communication.Models;
+using ATK.Command.Explorer.Binding;
 using ATK.Command.Explorer.Commands;
 using ATK.Command.Explorer.Configuration;
 using ATK.Command.Explorer.Services;
@@ -54,10 +55,15 @@ public sealed class CommandExplorerController : ControllerBase
     /// </summary>
     /// <param name="command">Das anhand von <c>$type</c> gebundene Command.</param>
     /// <param name="cancellationToken">Abbruch-Token.</param>
-    /// <returns>Das Ergebnis des Commands als JSON.</returns>
+    /// <returns>Eine <see cref="ApiResponse{T}"/> mit dem Ergebnis des Commands.</returns>
     /// <remarks>
     /// <para>
-    /// Liefert das Command ein <see cref="FileModel"/>, enthält die Antwort den Dateiinhalt
+    /// Jede Antwort – Erfolg wie Fehler – kommt in einer <see cref="ApiResponse{T}"/> aus
+    /// <c>ATK.Command.Communication.Models</c>. Die UI wertet damit einheitlich
+    /// <c>status</c>, <c>message</c> und <c>notifications</c> aus.
+    /// </para>
+    /// <para>
+    /// Liefert das Command ein <see cref="FileModel"/>, enthält <c>data</c> den Dateiinhalt
     /// Base64-kodiert. Die UI erkennt das und speichert die Datei.
     /// </para>
     /// <para>
@@ -77,7 +83,11 @@ public sealed class CommandExplorerController : ControllerBase
     {
         if (!this.ModelState.IsValid)
         {
-            return this.BadRequest(this.ModelState);
+            // Bindungsfehler (fehlendes $type, ungültiges JSON) als Hinweise in der Hülle.
+            return this.BadRequest(ApiResponseFactory.Failure(
+                "fail",
+                "Das Command konnte nicht gelesen werden.",
+                ApiResponseFactory.FromModelState(this.ModelState)));
         }
 
         var authenticationId = this.Request.Headers[
@@ -92,6 +102,6 @@ public sealed class CommandExplorerController : ControllerBase
 
         var result = await this.dispatcher.ExecuteAsync(command, cancellationToken);
 
-        return result is null ? this.Ok() : this.Ok(result);
+        return this.Ok(ApiResponseFactory.Success(result));
     }
 }
