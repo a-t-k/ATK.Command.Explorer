@@ -40,30 +40,6 @@ public sealed class ExecuteAppCommandCommand : IExplorerCommand<AppCommandResult
 }
 
 /// <summary>
-/// Ergebnis einer Command-Ausführung, inklusive HTTP-Metadaten.
-/// </summary>
-public sealed class AppCommandResult
-{
-    /// <summary>HTTP-Statuscode.</summary>
-    public int Status { get; init; }
-
-    /// <summary>HTTP-Statustext.</summary>
-    public string StatusText { get; init; } = string.Empty;
-
-    /// <summary>Gibt an, ob der Aufruf erfolgreich war (2xx).</summary>
-    public bool Success { get; init; }
-
-    /// <summary>Dauer in Millisekunden.</summary>
-    public long DurationMs { get; init; }
-
-    /// <summary>Der Antwort-Body als Text.</summary>
-    public string? Body { get; init; }
-
-    /// <summary>Der Content-Type der Antwort.</summary>
-    public string? ContentType { get; init; }
-}
-
-/// <summary>
 /// Führt <see cref="ExecuteAppCommandCommand"/> aus.
 /// </summary>
 public sealed class ExecuteAppCommandCommandHandler
