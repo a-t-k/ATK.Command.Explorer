@@ -29,8 +29,10 @@ public sealed class GetCommandCommandHandler
     }
 
     /// <inheritdoc />
-    public Task<CommandDescriptor?> HandleAsync(
+    public async Task<CommandDescriptor?> HandleAsync(
         GetCommandCommand command,
-        CancellationToken cancellationToken) =>
-        Task.FromResult(this.provider.GetCommand(command.Name));
+        CancellationToken cancellationToken)
+    {
+        return await Task.FromResult(this.provider.GetCommand(command.Name));
+    }
 }

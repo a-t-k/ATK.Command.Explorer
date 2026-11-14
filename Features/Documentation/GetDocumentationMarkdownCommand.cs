@@ -43,7 +43,7 @@ public sealed class GetDocumentationMarkdownCommandHandler
     }
 
     /// <inheritdoc />
-    public Task<FileModel> HandleAsync(
+    public async Task<FileModel> HandleAsync(
         GetDocumentationMarkdownCommand command,
         CancellationToken cancellationToken)
     {
@@ -65,7 +65,7 @@ public sealed class GetDocumentationMarkdownCommandHandler
 
         var document = files["00 Start.md"] + "\n\n---\n\n" + combined;
 
-        return Task.FromResult(FileModelFactory.Create(
+        return await Task.FromResult(FileModelFactory.Create(
             Encoding.UTF8.GetBytes(document),
             "text/markdown; charset=utf-8",
             $"{ScopeResolver.Slug(title)}.md"));

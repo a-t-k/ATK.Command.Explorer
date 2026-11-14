@@ -42,7 +42,7 @@ public sealed class GetDocumentationPdfCommandHandler
     }
 
     /// <inheritdoc />
-    public Task<FileModel> HandleAsync(
+    public async Task<FileModel> HandleAsync(
         GetDocumentationPdfCommand command,
         CancellationToken cancellationToken)
     {
@@ -51,7 +51,7 @@ public sealed class GetDocumentationPdfCommandHandler
 
         var pdf = this.generator.Generate(commands, title);
 
-        return Task.FromResult(FileModelFactory.Create(
+        return await Task.FromResult(FileModelFactory.Create(
             pdf,
             "application/pdf",
             $"{ScopeResolver.Slug(title)}.pdf"));

@@ -42,7 +42,7 @@ public sealed class GetTypeScriptCommandHandler
     }
 
     /// <inheritdoc />
-    public Task<FileModel> HandleAsync(
+    public async Task<FileModel> HandleAsync(
         GetTypeScriptCommand command,
         CancellationToken cancellationToken)
     {
@@ -54,7 +54,7 @@ public sealed class GetTypeScriptCommandHandler
             files,
             MarkdownVaultGenerator.SanitizeFileName(title));
 
-        return Task.FromResult(FileModelFactory.Create(
+        return await Task.FromResult(FileModelFactory.Create(
             archive,
             "application/zip",
             $"{ScopeResolver.Slug(title)}-typescript.zip"));

@@ -27,8 +27,10 @@ public sealed class GetNamespaceTreeCommandHandler
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<NamespaceNode>> HandleAsync(
+    public async Task<IReadOnlyList<NamespaceNode>> HandleAsync(
         GetNamespaceTreeCommand command,
-        CancellationToken cancellationToken) =>
-        Task.FromResult(this.provider.GetNamespaceTree());
+        CancellationToken cancellationToken)
+    {
+        return await Task.FromResult(this.provider.GetNamespaceTree());
+    }
 }

@@ -28,8 +28,10 @@ public sealed class GetAuthenticationsCommandHandler
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<CommandAuthenticationDescriptor>> HandleAsync(
+    public async Task<IReadOnlyList<CommandAuthenticationDescriptor>> HandleAsync(
         GetAuthenticationsCommand command,
-        CancellationToken cancellationToken) =>
-        Task.FromResult(this.resolver.GetDescriptors());
+        CancellationToken cancellationToken)
+    {
+        return await Task.FromResult(this.resolver.GetDescriptors());
+    }
 }

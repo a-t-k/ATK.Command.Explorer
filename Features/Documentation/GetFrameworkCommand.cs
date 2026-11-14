@@ -38,7 +38,7 @@ public sealed class GetFrameworkCommandHandler
     }
 
     /// <inheritdoc />
-    public Task<FileModel> HandleAsync(
+    public async Task<FileModel> HandleAsync(
         GetFrameworkCommand command,
         CancellationToken cancellationToken)
     {
@@ -56,7 +56,7 @@ public sealed class GetFrameworkCommandHandler
             files,
             MarkdownVaultGenerator.SanitizeFileName(title));
 
-        return Task.FromResult(FileModelFactory.Create(
+        return await Task.FromResult(FileModelFactory.Create(
             archive,
             "application/zip",
             $"{ScopeResolver.Slug(title)}-framework.zip"));
