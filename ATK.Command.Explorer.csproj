@@ -53,6 +53,7 @@
 
     <ItemGroup>
         <PackageReference Include="ATK.Command.AspNet.ModelBinder" Version="0.0.5" />
+        <PackageReference Include="ATK.Command.Communication.Models" Version="0.0.3" />
         <PackageReference Include="ATK.Command.CsToTsGenerator" Version="1.1.9" />
         <PackageReference Include="Cortex.Mediator" Version="3.1.2" />
         <PackageReference Include="PDFsharp" Version="6.2.4" />

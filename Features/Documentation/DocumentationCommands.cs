@@ -1,4 +1,5 @@
 using System.Text;
+using ATK.Command.Communication.Models;
 using ATK.Command.Explorer.Commands;
 using ATK.Command.Explorer.Configuration;
 using ATK.Command.Explorer.Documentation;
@@ -55,7 +56,7 @@ public sealed class GetDocumentationVaultCommandHandler
             files,
             MarkdownVaultGenerator.SanitizeFileName(title));
 
-        return Task.FromResult(FileModel.FromBytes(
+        return Task.FromResult(FileModelFactory.Create(
             archive,
             "application/zip",
             $"{ScopeResolver.Slug(title)}-vault.zip"));
@@ -105,7 +106,7 @@ public sealed class GetDocumentationPdfCommandHandler
 
         var pdf = this.generator.Generate(commands, title);
 
-        return Task.FromResult(FileModel.FromBytes(
+        return Task.FromResult(FileModelFactory.Create(
             pdf,
             "application/pdf",
             $"{ScopeResolver.Slug(title)}.pdf"));
@@ -168,7 +169,7 @@ public sealed class GetDocumentationMarkdownCommandHandler
 
         var document = files["00 Start.md"] + "\n\n---\n\n" + combined;
 
-        return Task.FromResult(FileModel.FromBytes(
+        return Task.FromResult(FileModelFactory.Create(
             Encoding.UTF8.GetBytes(document),
             "text/markdown; charset=utf-8",
             $"{ScopeResolver.Slug(title)}.md"));
@@ -221,7 +222,7 @@ public sealed class GetTypeScriptCommandHandler
             files,
             MarkdownVaultGenerator.SanitizeFileName(title));
 
-        return Task.FromResult(FileModel.FromBytes(
+        return Task.FromResult(FileModelFactory.Create(
             archive,
             "application/zip",
             $"{ScopeResolver.Slug(title)}-typescript.zip"));
@@ -276,7 +277,7 @@ public sealed class GetFrameworkCommandHandler
             files,
             MarkdownVaultGenerator.SanitizeFileName(title));
 
-        return Task.FromResult(FileModel.FromBytes(
+        return Task.FromResult(FileModelFactory.Create(
             archive,
             "application/zip",
             $"{ScopeResolver.Slug(title)}-framework.zip"));

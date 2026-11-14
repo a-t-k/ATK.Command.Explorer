@@ -8,19 +8,36 @@ und nutzbar über eine mitgelieferte Angular-UI.
 
 ## Was es liefert
 
-| Endpunkt | Inhalt |
-| --- | --- |
-| `GET /commands/explorer` | alle Commands als `CommandDescriptor[]` |
-| `GET /commands/explorer/tree` | Namespace-Hierarchie |
-| `GET /commands/explorer/{name}` | ein Command oder 404 |
-| `GET /commands/explorer/documentation/vault` | Obsidian-Vault als ZIP |
-| `GET /commands/explorer/documentation/markdown` | eine Markdown-Datei |
-| `GET /commands/explorer/documentation/pdf` | PDF-Referenz |
-| `GET /commands/explorer/typescript` | TypeScript-Typen als ZIP |
-| `GET /commands/explorer/framework?framework=angular` | Angular-Gerüst als ZIP |
+Der Explorer hat **genau einen Endpunkt**: `POST /commands/explorer`. Welches Anliegen
+erledigt wird, steht im JSON-Feld `$type` – genau wie bei den Commands der Anwendung.
 
-Alle Dokumentations-Endpunkte akzeptieren `?scope=` (Namespace oder Command-Name).
-Ohne `scope` wird alles exportiert, bei unbekanntem Wert antwortet die API mit `404`.
+| Command | Ergebnis |
+| --- | --- |
+| `GetCommandsCommand` | alle Commands als `CommandDescriptor[]` |
+| `GetNamespaceTreeCommand` | Namespace-Hierarchie |
+| `GetCommandCommand` | ein Command oder `null` |
+| `GetAuthenticationsCommand` | Authentifizierungen für das Dropdown |
+| `GetDocumentationVaultCommand` | Obsidian-Vault als ZIP (`FileModel`) |
+| `GetDocumentationMarkdownCommand` | eine Markdown-Datei (`FileModel`) |
+| `GetDocumentationPdfCommand` | PDF-Referenz (`FileModel`) |
+| `GetTypeScriptCommand` | TypeScript-Typen als ZIP (`FileModel`) |
+| `GetFrameworkCommand` | Angular-Gerüst als ZIP (`FileModel`) |
+| `ExecuteAppCommandCommand` | führt ein Anwendungs-Command aus (Proxy) |
+
+Die Dokumentations-Commands akzeptieren `Scope` (Namespace oder Command-Name). Ohne
+`Scope` wird alles exportiert, bei unbekanntem Wert antwortet die API mit `400`.
+
+```json
+{
+  "$type": "ATK.Command.Explorer.Features.Documentation.GetDocumentationPdfCommand, ATK.Command.Explorer",
+  "scope": "MyCompany.MyProduct.Orders"
+}
+```
+
+> [!IMPORTANT]
+> `$type` muss das **erste** Feld im JSON sein. Der ModelBinder liest den Typnamen über
+> Newtonsoft `TypeNameHandling.Objects`; steht ein anderes Feld davor, schlägt die Bindung
+> mit `Cant parse to object.` fehl.
 
 ## Installation
 
@@ -165,13 +182,13 @@ ist Sache der Anwendung. Beide Varianten lassen sich mischen.
 ### Ablauf
 
 ```
-1. UI lädt GET /commands/explorer/authentications
+1. UI lädt GetAuthenticationsCommand
    → [{ id, name, type, headerName, isDynamic }]   (ohne Token)
 
 2. Benutzer wählt im Dropdown eine Id
 
-3. UI sendet POST /commands/explorer/execute?authenticationId=<id>
-   → Body unverändert durchgereicht
+3. UI sendet ExecuteAppCommandCommand mit authenticationId
+   → Payload (Command-JSON) wird unverändert durchgereicht
 
 4. Explorer-Controller
    → CommandAuthenticationResolver.ResolveHeadersAsync(id)
@@ -279,7 +296,8 @@ Beim Packen wird die Angular-UI automatisch gebaut, sofern
 
 | Paket | Version | Anmerkung |
 | --- | --- | --- |
-| `ATK.Command.AspNet.ModelBinder` | 0.0.5 | |
+| `ATK.Command.AspNet.ModelBinder` | 0.0.5 | ModelBinding der Explorer-Commands |
+| `ATK.Command.Communication.Models` | 0.0.3 | `FileModel` für Downloads |
 | `ATK.Command.CsToTsGenerator` | 1.1.9 | TypeScript-Export |
 | `Cortex.Mediator` | 3.1.2 | |
 | `PDFsharp` | 6.2.4 | letzte MIT-Version – **nicht** aktualisieren |

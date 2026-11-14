@@ -1,7 +1,7 @@
-using ATK.Command.Explorer.Binding;
+using ATK.Command.AspNet.ModelBinder;
+using ATK.Command.Communication.Models;
 using ATK.Command.Explorer.Commands;
 using ATK.Command.Explorer.Configuration;
-using ATK.Command.Explorer.Models;
 using ATK.Command.Explorer.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -72,8 +72,7 @@ public sealed class CommandExplorerController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> Execute(
-        [FromBody] [ModelBinder(BinderType = typeof(ExplorerCommandModelBinder))]
-        IExplorerCommand command,
+        [ModelBinder] IExplorerCommand command,
         CancellationToken cancellationToken)
     {
         if (!this.ModelState.IsValid)

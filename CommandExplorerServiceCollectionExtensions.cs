@@ -1,4 +1,5 @@
 using System.Reflection;
+using ATK.Command.AspNet.ModelBinder;
 using ATK.Command.Explorer.Authorization;
 using ATK.Command.Explorer.Binding;
 using ATK.Command.Explorer.Commands;
@@ -91,11 +92,11 @@ public static class CommandExplorerServiceCollectionExtensions
             ServiceDescriptor.Singleton<IValidateOptions<CommandExplorerOptions>,
                 CommandExplorerOptionsValidator>());
 
-        // Command-Schicht des Explorers: eigener Dispatcher, eigener ModelBinder.
+        // Command-Schicht des Explorers: eigener Dispatcher.
         // Der Explorer kennt das Command-Interface der Anwendung nicht und bringt deshalb
-        // eine minimale eigene Infrastruktur mit.
+        // eine minimale eigene Infrastruktur mit. Das ModelBinding übernimmt der Binder aus
+        // dem Paket ATK.Command.AspNet.ModelBinder.
         services.AddSingleton<ExplorerCommandDispatcher>();
-        services.AddSingleton<IReadOnlyList<Assembly>>(_ => [typeof(CommandExplorerController).Assembly]);
 
         // Für den Command-Proxy: Basis-URL aus der aktuellen Anfrage ermitteln.
         services.AddHttpContextAccessor();
@@ -131,8 +132,10 @@ public static class CommandExplorerServiceCollectionExtensions
                     authentication));
 
                 // Der Binder greift nur bei Parametern vom Typ IExplorerCommand.
-                mvc.ModelBinderProviders.Insert(0, new ExplorerCommandModelBinderProvider(
-                    [typeof(CommandExplorerController).Assembly]));
+                // Die Authentifizierung der Explorer-Commands übernimmt die Konvention oben;
+                // der Binder selbst bekommt deshalb eine Implementierung, die alles durchlässt.
+                mvc.ModelBinderProviders.Insert(0, new RequestCommandModelBinderProvider<IExplorerCommand>(
+                    [new ExplorerCommandAuthentication()]));
             });
 
         return services;
