@@ -4,7 +4,6 @@ using ATK.Command.Explorer.Binding;
 using ATK.Command.Explorer.Commands;
 using ATK.Command.Explorer.Configuration;
 using ATK.Command.Explorer.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
@@ -75,8 +74,6 @@ public sealed class CommandExplorerController : ControllerBase
     /// </para>
     /// </remarks>
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> Execute(
         [ModelBinder] IExplorerCommand command,
         CancellationToken cancellationToken)
