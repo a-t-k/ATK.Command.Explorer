@@ -19,16 +19,31 @@ namespace ATK.Command.Explorer.Binding;
 /// Ergebnistyp ist zur Compile-Zeit ohnehin unbekannt (der Dispatcher arbeitet über
 /// Reflection).
 /// </para>
+/// <para>
+/// Die Klasse ist öffentlich, damit auch der Command-Endpunkt der Anwendung dieselbe
+/// Hülle bauen kann. Liefert ein Command bereits eine <see cref="ApiResponse{T}"/>, wird
+/// sie unverändert durchgereicht – kein doppeltes Verpacken.
+/// </para>
 /// </remarks>
-internal static class ApiResponseFactory
+public static class ApiResponseFactory
 {
     /// <summary>
     /// Verpackt ein Ergebnis als erfolgreiche Antwort.
     /// </summary>
     /// <param name="result">Das Ergebnis des Commands; darf <c>null</c> sein.</param>
-    /// <returns>Die Hülle mit <c>status = "success"</c>.</returns>
-    public static ApiResponse<object?> Success(object? result) =>
-        ApiResponse<object?>.Success(result, string.Empty);
+    /// <returns>
+    /// Die Hülle mit <c>status = "success"</c> – oder <paramref name="result"/> selbst,
+    /// wenn es bereits eine <see cref="ApiResponse{T}"/> ist.
+    /// </returns>
+    public static object Success(object? result)
+    {
+        if (IsApiResponse(result))
+        {
+            return result!;
+        }
+
+        return ApiResponse<object?>.Success(result, string.Empty);
+    }
 
     /// <summary>
     /// Verpackt einen Fehler als Antwort.
@@ -84,5 +99,23 @@ internal static class ApiResponseFactory
                 yield return Notification.Error(text, entry.Key);
             }
         }
+    }
+
+    /// <summary>
+    /// Prüft, ob ein Wert bereits eine <see cref="ApiResponse{T}"/> ist.
+    /// </summary>
+    /// <param name="value">Der zu prüfende Wert.</param>
+    /// <returns><c>true</c>, wenn der Typ <see cref="ApiResponse{T}"/> ist.</returns>
+    public static bool IsApiResponse(object? value)
+    {
+        if (value is null)
+        {
+            return false;
+        }
+
+        var type = value.GetType();
+
+        return type.IsGenericType
+               && type.GetGenericTypeDefinition() == typeof(ApiResponse<>);
     }
 }
