@@ -1,11 +1,9 @@
-using ATK.Command.AspNet.ModelBinder;
 using ATK.Command.Communication.Models;
 using ATK.Command.Explorer.Binding;
 using ATK.Command.Explorer.Commands;
 using ATK.Command.Explorer.Configuration;
 using ATK.Command.Explorer.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
 
 namespace ATK.Command.Explorer.Controller;
