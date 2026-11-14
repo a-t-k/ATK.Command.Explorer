@@ -177,11 +177,27 @@ public sealed class CommandExplorerOptions
     /// normalerweise direkt aufruft.
     /// </para>
     /// <para>
-    /// Der Wert wird ohne führenden Schrägstrich erwartet und relativ zur aktuellen Anfrage
-    /// aufgelöst (gleiche Origin, gleiches Schema).
+    /// Der Wert wird ohne führenden Schrägstrich erwartet.
     /// </para>
     /// </remarks>
     public string CommandEndpoint { get; set; } = "commands";
+
+    /// <summary>
+    /// Basis-URL der eigenen Anwendung für den Command-Proxy.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Bleibt der Wert leer, ermittelt der Explorer die Adresse aus der aktuellen Anfrage
+    /// (Schema + Host). Das ist der Normalfall und funktioniert auch hinter einem
+    /// Reverse-Proxy.
+    /// </para>
+    /// <para>
+    /// Setzen ist nur nötig, wenn der Proxy außerhalb einer HTTP-Anfrage läuft oder die
+    /// Anwendung unter einer anderen Adresse erreichbar ist, als der Explorer annimmt.
+    /// Beispiel: <c>http://localhost:5100</c>.
+    /// </para>
+    /// </remarks>
+    public string? CommandBaseUrl { get; set; }
 
     /// <summary>
     /// Name der Policy, die der Explorer für seine Endpunkte verwendet.
