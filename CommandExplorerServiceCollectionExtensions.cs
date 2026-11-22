@@ -98,6 +98,11 @@ public static class CommandExplorerServiceCollectionExtensions
         // dem Paket ATK.Command.AspNet.ModelBinder.
         services.AddSingleton<ExplorerCommandDispatcher>();
 
+        // Aufnahme-Funktion: zeichnet Command-Requests und ihre Antworten auf.
+        // Immer registriert, damit die Commands auflösbar sind – die Middleware entscheidet
+        // zur Laufzeit, ob tatsächlich mitgeschnitten wird.
+        services.AddSingleton<CommandRecorder>();
+
         // Für den Command-Proxy: Basis-URL aus der aktuellen Anfrage ermitteln.
         services.AddHttpContextAccessor();
         services.AddHttpClient();

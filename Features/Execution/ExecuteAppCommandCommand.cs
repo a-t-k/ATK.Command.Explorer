@@ -89,6 +89,16 @@ public sealed class ExecuteAppCommandCommandHandler
             request.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
 
+        // Die Id der gewählten Authentifizierung zusätzlich mitschicken, damit der
+        // Recorder den Aufruf zuordnen kann. Der Wert ist nur ein Name, kein Token –
+        // die Anwendung ignoriert den Header.
+        if (!string.IsNullOrWhiteSpace(command.AuthenticationId))
+        {
+            request.Headers.TryAddWithoutValidation(
+                this.options.Value.AuthenticationHeaderName,
+                command.AuthenticationId);
+        }
+
         using var client = this.httpClientFactory.CreateClient(nameof(ExecuteAppCommandCommandHandler));
 
         using var response = await client.SendAsync(

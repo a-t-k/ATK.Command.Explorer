@@ -200,6 +200,25 @@ public sealed class CommandExplorerOptions
     public string? CommandBaseUrl { get; set; }
 
     /// <summary>
+    /// Gibt an, ob die Aufnahme-Funktion (Recorder) verfügbar ist.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Ist der Wert <c>true</c>, kann die UI über eine Schaltfläche in den Aufnahme-Zustand
+    /// wechseln. In diesem Zustand schneidet der Explorer alle Requests auf
+    /// <see cref="CommandEndpoint"/> mit – inklusive Request-Body, Response-Body und den
+    /// Zeitpunkten. Die Requests werden unverändert weitergeleitet, die Anwendung arbeitet
+    /// also normal weiter.
+    /// </para>
+    /// <para>
+    /// Standard ist <c>false</c>: Die Middleware wird dann nicht registriert und es entsteht
+    /// kein zusätzlicher Aufwand pro Request. In Produktivumgebungen sollte die Aufnahme
+    /// aus bleiben, weil sie Request- und Response-Bodys im Speicher hält.
+    /// </para>
+    /// </remarks>
+    public bool EnableRecording { get; set; }
+
+    /// <summary>
     /// Name der Policy, die der Explorer für seine Endpunkte verwendet.
     /// </summary>
     /// <remarks>
