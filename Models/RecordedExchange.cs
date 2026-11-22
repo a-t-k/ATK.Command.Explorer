@@ -39,7 +39,11 @@ public sealed class RecordedExchange
     public string? CommandType { get; init; }
 
     /// <summary>Der Request-Body, unverändert.</summary>
-    public string RequestBody { get; init; } = string.Empty;
+    /// <remarks>
+    /// Wird beim Bearbeiten eines Eintrags ersetzt. Das Feld <c>$type</c> bleibt dabei
+    /// unverändert – es bestimmt, welches Command die Anwendung ausführt.
+    /// </remarks>
+    public string RequestBody { get; set; } = string.Empty;
 
     /// <summary>HTTP-Statuscode der Antwort.</summary>
     public int? StatusCode { get; set; }

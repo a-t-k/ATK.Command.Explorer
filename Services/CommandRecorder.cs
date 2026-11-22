@@ -201,16 +201,21 @@ public sealed class CommandRecorder
     {
         lock (this.gate)
         {
-            return new RecordingSession
-            {
-                Id = this.sessionId ?? string.Empty,
-                StartedAt = this.startedAt ?? default,
-                StoppedAt = this.stoppedAt,
-                IsActive = this.sessionId is not null && this.stoppedAt is null,
-                Exchanges = [.. this.exchanges.Values.OrderBy(entry => entry.Sequence)],
-            };
+            return this.CreateSession();
         }
     }
+
+    /// <summary>
+    /// Baut die Aufnahme aus den aktuellen Feldern. Muss innerhalb der Sperre laufen.
+    /// </summary>
+    private RecordingSession CreateSession() => new()
+    {
+        Id = this.sessionId ?? string.Empty,
+        StartedAt = this.startedAt ?? default,
+        StoppedAt = this.stoppedAt,
+        IsActive = this.sessionId is not null && this.stoppedAt is null,
+        Exchanges = [.. this.exchanges.Values.OrderBy(entry => entry.Sequence)],
+    };
 
     /// <summary>
     /// Legt einen Eintrag für einen eintreffenden Request an.
@@ -255,6 +260,95 @@ public sealed class CommandRecorder
             return exchange;
         }
     }
+
+    /// <summary>
+    /// Ersetzt den Request-Body eines aufgezeichneten Aufrufs.
+    /// </summary>
+    /// <param name="exchangeId">Id des Eintrags.</param>
+    /// <param name="body">Der neue Request-Body.</param>
+    /// <returns>
+    /// Das Ergebnis mit dem aktuellen Stand der Aufnahme. Wird die Änderung abgelehnt,
+    /// steht der Grund in <see cref="UpdateRecordingResult.Error"/>.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// Das Feld <c>$type</c> darf sich nicht ändern: Es bestimmt, welches Command die
+    /// Anwendung ausführt. Ein anderer Wert würde den Eintrag zu einem anderen Command
+    /// machen – die Aufnahme soll aber denselben Aufruf mit anderen Parametern zeigen.
+    /// </para>
+    /// <para>
+    /// Der Body muss gültiges JSON sein. Die inhaltliche Prüfung gegen das JSON-Schema
+    /// übernimmt die UI; hier wird nur die Struktur geprüft, weil der Explorer die
+    /// Command-Typen der Anwendung nicht kennt.
+    /// </para>
+    /// </remarks>
+    public UpdateRecordingResult UpdateRequestBody(string exchangeId, string body)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(exchangeId);
+
+        lock (this.gate)
+        {
+            if (!this.exchanges.TryGetValue(exchangeId, out var exchange))
+            {
+                return this.Reject("Der Aufruf existiert nicht mehr.");
+            }
+
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                return this.Reject("Der Request-Body ist leer.");
+            }
+
+            string? newType;
+
+            try
+            {
+                using var document = JsonDocument.Parse(body);
+
+                if (document.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    return this.Reject("Der Request-Body muss ein JSON-Objekt sein.");
+                }
+
+                newType = document.RootElement.TryGetProperty("$type", out var typeElement)
+                           && typeElement.ValueKind == JsonValueKind.String
+                    ? typeElement.GetString()
+                    : null;
+            }
+            catch (JsonException exception)
+            {
+                return this.Reject($"Der Request-Body ist kein gültiges JSON: {exception.Message}");
+            }
+
+            if (string.IsNullOrWhiteSpace(newType))
+            {
+                return this.Reject("Das Feld '$type' fehlt im Request-Body.");
+            }
+
+            if (!string.Equals(newType, exchange.CommandType, StringComparison.Ordinal))
+            {
+                return this.Reject(
+                    "Das Feld '$type' darf nicht geändert werden – es bestimmt das Command.");
+            }
+
+            exchange.RequestBody = body;
+
+            return new UpdateRecordingResult
+            {
+                Success = true,
+                Session = this.CreateSession(),
+            };
+        }
+    }
+
+    /// <summary>
+    /// Baut eine Ablehnung mit dem aktuellen Stand der Aufnahme.
+    /// </summary>
+    private UpdateRecordingResult Reject(string reason) => new()
+    {
+        Success = false,
+        Error = reason,
+        Session = this.CreateSession(),
+    };
 
     /// <summary>
     /// Ergänzt einen Eintrag um die Antwort.
