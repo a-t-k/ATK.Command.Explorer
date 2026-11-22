@@ -284,10 +284,16 @@ public sealed class CommandRecorder
     /// </remarks>
     public UpdateRecordingResult UpdateRequestBody(string exchangeId, string body)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(exchangeId);
-
         lock (this.gate)
         {
+            // Bewusst kein ThrowIfNullOrWhiteSpace: Eine fehlende Id ist ein Bedienfehler
+            // der UI, kein Serverfehler. Ein 500 mit Stacktrace wäre für den Benutzer
+            // unbrauchbar – die UI zeigt stattdessen diese Meldung.
+            if (string.IsNullOrWhiteSpace(exchangeId))
+            {
+                return this.Reject("Es ist kein Aufruf ausgewählt.");
+            }
+
             if (!this.exchanges.TryGetValue(exchangeId, out var exchange))
             {
                 return this.Reject("Der Aufruf existiert nicht mehr.");
