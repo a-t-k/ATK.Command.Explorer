@@ -74,6 +74,21 @@ builder.Services.Configure<ApiBehaviorOptions>(
     o => o.SuppressModelStateInvalidFilter = true);
 ```
 
+### MVC wird mitgebracht
+
+`AddCommandExplorer` ruft selbst `AddControllers()` und `AddApplicationPart(...)` auf. Ein
+eigenes `AddControllers()` in der Anwendung ist **nicht nötig** – aber auch nicht
+schädlich, weil der Aufruf idempotent ist. Wer eigene MVC-Optionen braucht (etwa
+`AddNewtonsoftJson()` oder eigene `ModelBinderProviders`), ruft `AddControllers()`
+weiterhin selbst auf; die Explorer-Konventionen kommen zusätzlich dazu.
+
+`app.MapControllers()` muss in der Anwendung stehen – der Explorer registriert nur die
+Dienste, nicht die Endpunkt-Zuordnung.
+
+> [!NOTE]
+> Bis 0.4.1 war `AddControllers()` im Anwendungscode Pflicht. Fehlte es, antwortete
+> `POST /commands/explorer` mit `404` – ohne Fehlermeldung beim Start.
+
 ## Autorisierung: Commands sind per Default gesperrt
 
 **Jedes Command ist ohne weiteres Zutun geschützt.** Der ModelBinder

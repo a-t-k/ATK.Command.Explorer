@@ -126,6 +126,16 @@ public static class CommandExplorerServiceCollectionExtensions
         services.TryAddEnumerable(
             ServiceDescriptor.Transient<IAuthorizationHandler, CommandExplorerClaimHandler>());
 
+        // Der Explorer bringt einen Controller mit. Ohne MVC würde er nicht gefunden und
+        // POST /commands/explorer liefe in ein 404 – ein Fehler, der erst zur Laufzeit
+        // auffällt und keine Meldung erzeugt.
+        // AddControllers ist idempotent: Ruft die Anwendung es selbst auf (etwa mit eigenen
+        // Optionen oder Newtonsoft), bleibt das wirksam. AddApplicationPart stellt sicher,
+        // dass der Controller auch dann gefunden wird, wenn die Anwendung die
+        // Standard-Ermittlung der ApplicationParts einschränkt.
+        services.AddControllers()
+            .AddApplicationPart(typeof(CommandExplorerController).Assembly);
+
         services.AddOptions<MvcOptions>()
             .Configure<IOptionsMonitor<CommandExplorerOptions>,
                 IOptionsMonitor<AuthorizationOptions>,
