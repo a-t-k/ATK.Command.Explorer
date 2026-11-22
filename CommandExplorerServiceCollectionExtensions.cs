@@ -136,6 +136,10 @@ public static class CommandExplorerServiceCollectionExtensions
                     authorization,
                     authentication));
 
+                // Die Basisroute kommt aus der Konfiguration; das [Route]-Attribut am
+                // Controller dient nur als Standard.
+                mvc.Conventions.Add(new CommandExplorerRouteConvention(explorer));
+
                 // Der Binder greift nur bei Parametern vom Typ IExplorerCommand.
                 // Die Authentifizierung der Explorer-Commands übernimmt die Konvention oben;
                 // der Binder selbst bekommt deshalb eine Implementierung, die alles durchlässt.

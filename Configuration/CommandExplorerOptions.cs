@@ -29,8 +29,33 @@ public sealed class CommandExplorerOptions
     /// <remarks>
     /// Standard ist <c>commands/explorer</c>. Der Wert wird ohne führenden oder
     /// abschließenden Schrägstrich erwartet.
+    /// <para>
+    /// Die Route wird zur Laufzeit über eine Konvention am Controller gesetzt – der
+    /// <c>[Route]</c>-Attributwert dient nur als Standard, wenn die Option leer bleibt.
+    /// </para>
     /// </remarks>
     public string RoutePrefix { get; set; } = "commands/explorer";
+
+    /// <summary>
+    /// Maximale Tiefe, bis zu der verschachtelte Typen beschrieben werden.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Der Explorer läuft rekursiv durch die Properties eines Commands. Ohne Grenze würde
+    /// ein Typ mit Selbstbezug (etwa ein Baumknoten mit Kindern desselben Typs) endlos
+    /// beschrieben. Standard ist <c>4</c>.
+    /// </para>
+    /// <para>
+    /// Höhere Werte liefern mehr Details, blähen aber die Metadaten und das JSON-Schema auf.
+    /// Bei sehr tief verschachtelten Verträgen ist ein Wert von 6–8 sinnvoll.
+    /// </para>
+    /// </remarks>
+    public int MaxDepth { get; set; } = DefaultMaxDepth;
+
+    /// <summary>
+    /// Standardwert für <see cref="MaxDepth"/>.
+    /// </summary>
+    public const int DefaultMaxDepth = 4;
 
     /// <summary>
     /// Gibt an, ob die Endpunkte anonym erreichbar sind.

@@ -23,14 +23,13 @@ namespace ATK.Command.Explorer.Services;
 /// </remarks>
 public sealed class CommandMetadataProvider
 {
-    private const int MaxDepth = 4;
-
     private readonly Assembly assembly;
     private readonly Type markerInterface;
     private readonly XmlDocumentationReader documentation;
     private readonly JsonSchemaBuilder schemaBuilder;
     private readonly JsonSerializerOptions jsonOptions;
     private readonly IReadOnlyList<string> namespacePrefixes;
+    private readonly int maxDepth;
 
     /// <summary>
     /// Erzeugt einen Provider für die angegebene Assembly.
@@ -53,6 +52,7 @@ public sealed class CommandMetadataProvider
         this.documentation = new XmlDocumentationReader(assembly);
         this.schemaBuilder = new JsonSchemaBuilder();
         this.namespacePrefixes = NormalizePrefixes(options?.Value.NamespacePrefixes);
+        this.maxDepth = options?.Value.MaxDepth ?? CommandExplorerOptions.DefaultMaxDepth;
         this.jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -517,7 +517,7 @@ public sealed class CommandMetadataProvider
 
     private IReadOnlyList<CommandPropertyDescriptor> DescribeProperties(Type type, int depth)
     {
-        if (depth > MaxDepth)
+        if (depth > this.maxDepth)
         {
             return [];
         }
@@ -569,7 +569,7 @@ public sealed class CommandMetadataProvider
     private CommandPropertyDescriptor? DescribeElementType(Type collectionType, int depth)
     {
         var elementType = ResolveElementType(collectionType);
-        if (elementType is null || depth > MaxDepth)
+        if (elementType is null || depth > this.maxDepth)
         {
             return null;
         }
