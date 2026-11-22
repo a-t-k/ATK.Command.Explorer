@@ -112,6 +112,73 @@ public sealed class CommandRecorder
         }
     }
 
+    /// <summary>
+    /// Übernimmt eine zuvor exportierte Aufnahme.
+    /// </summary>
+    /// <param name="session">Die zu übernehmende Aufnahme.</param>
+    /// <returns>Der Zustand nach dem Import.</returns>
+    /// <remarks>
+    /// <para>
+    /// Die Aufnahme wird als beendet übernommen – ein Import während einer laufenden
+    /// Aufnahme beendet diese. Die laufende Nummer wird neu vergeben, damit sie lückenlos
+    /// bei 1 beginnt, auch wenn die Datei von Hand bearbeitet wurde.
+    /// </para>
+    /// <para>
+    /// Die Einträge werden nach ihrem Zeitstempel sortiert übernommen, damit die
+    /// Reihenfolge auch dann stimmt, wenn die Datei unsortiert ist.
+    /// </para>
+    /// </remarks>
+    public RecordingStatus Import(RecordingSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        lock (this.gate)
+        {
+            this.exchanges.Clear();
+            this.sequence = 0;
+
+            this.sessionId = string.IsNullOrWhiteSpace(session.Id)
+                ? Guid.NewGuid().ToString("N")
+                : session.Id;
+
+            this.startedAt = session.StartedAt == default
+                ? DateTimeOffset.UtcNow
+                : session.StartedAt;
+
+            // Importierte Aufnahmen gelten als beendet – sonst würde der Recorder
+            // weiter mitschneiden, ohne dass der Benutzer das erwartet.
+            this.stoppedAt = session.StoppedAt ?? this.startedAt;
+
+            foreach (var entry in session.Exchanges.OrderBy(item => item.RequestTimestamp))
+            {
+                RecordedExchange copy = new()
+                {
+                    Id = string.IsNullOrWhiteSpace(entry.Id)
+                        ? Guid.NewGuid().ToString("N")
+                        : entry.Id,
+                    Sequence = ++this.sequence,
+                    RequestTimestamp = entry.RequestTimestamp,
+                    ResponseTimestamp = entry.ResponseTimestamp,
+                    DurationMs = entry.DurationMs,
+                    CommandName = entry.CommandName,
+                    CommandType = entry.CommandType,
+                    RequestBody = entry.RequestBody,
+                    StatusCode = entry.StatusCode,
+                    ResponseBody = entry.ResponseBody,
+                    ContentType = entry.ContentType,
+                    Method = entry.Method,
+                    Path = entry.Path,
+                    AuthenticationId = entry.AuthenticationId,
+                    Error = entry.Error,
+                };
+
+                this.exchanges[copy.Id] = copy;
+            }
+
+            return this.CreateStatus();
+        }
+    }
+
     /// <summary>Liefert den aktuellen Zustand ohne Einträge.</summary>
     /// <returns>Der Zustand der Aufnahme.</returns>
     public RecordingStatus GetStatus()
