@@ -69,6 +69,15 @@ public sealed class CommandRecordingMiddleware
             return;
         }
 
+        // Replays laufen ebenfalls über den Command-Endpunkt. Sie sind aber schon Teil der
+        // Aufnahme – ein zweiter Eintrag wäre eine Dublette.
+        if (context.Request.Headers.ContainsKey(
+                CommandExplorerOptions.SuppressRecordingHeaderName))
+        {
+            await this.next(context);
+            return;
+        }
+
         var body = await ReadRequestBodyAsync(context.Request);
 
         var authenticationId = context.Request.Headers[

@@ -37,6 +37,15 @@ public sealed class ExecuteAppCommandCommand : IExplorerCommand<AppCommandResult
     /// Id der gewählten Authentifizierung oder <c>null</c>.
     /// </summary>
     public string? AuthenticationId { get; set; }
+
+    /// <summary>
+    /// Gibt an, ob der Aufruf von der laufenden Aufnahme ausgenommen wird.
+    /// </summary>
+    /// <remarks>
+    /// Wird beim erneuten Ausführen eines aufgezeichneten Aufrufs gesetzt. Sonst würde der
+    /// Replay selbst wieder mitgeschnitten und die Aufnahme füllte sich mit Dubletten.
+    /// </remarks>
+    public bool SuppressRecording { get; set; }
 }
 
 /// <summary>
@@ -97,6 +106,15 @@ public sealed class ExecuteAppCommandCommandHandler
             request.Headers.TryAddWithoutValidation(
                 this.options.Value.AuthenticationHeaderName,
                 command.AuthenticationId);
+        }
+
+        // Replays dürfen die laufende Aufnahme nicht erweitern – sonst entstünde für jeden
+        // erneut ausgeführten Aufruf ein zweiter Eintrag mit demselben Command.
+        if (command.SuppressRecording)
+        {
+            request.Headers.TryAddWithoutValidation(
+                CommandExplorerOptions.SuppressRecordingHeaderName,
+                "1");
         }
 
         using var client = this.httpClientFactory.CreateClient(nameof(ExecuteAppCommandCommandHandler));

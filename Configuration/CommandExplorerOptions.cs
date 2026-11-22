@@ -244,6 +244,22 @@ public sealed class CommandExplorerOptions
     public bool EnableRecording { get; set; }
 
     /// <summary>
+    /// Name des Headers, mit dem ein Aufruf von der Aufnahme ausgenommen wird.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Der Explorer-Proxy setzt diesen Header, wenn ein aufgezeichneter Aufruf erneut
+    /// ausgeführt wird (Replay). Ohne die Ausnahme würde jeder Replay einen neuen Eintrag
+    /// in derselben Aufnahme erzeugen – die Liste füllte sich mit Dubletten.
+    /// </para>
+    /// <para>
+    /// Der Header ist ein reiner Hinweis an die Middleware. Die Anwendung selbst
+    /// ignoriert ihn.
+    /// </para>
+    /// </remarks>
+    public const string SuppressRecordingHeaderName = "X-Explorer-No-Record";
+
+    /// <summary>
     /// Name der Policy, die der Explorer für seine Endpunkte verwendet.
     /// </summary>
     /// <remarks>
